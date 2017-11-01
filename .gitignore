@@ -1,2 +1,14 @@
-*.class
-*.log
+# OS cache files
+.DS_Store
+
+# IDE files
+/.idea/
+
+# Tools
+tools/*
+
+# Output and build files
+target/
+
+# To maintain directory structure
+!.keep
