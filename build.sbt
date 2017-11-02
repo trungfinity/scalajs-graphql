@@ -3,9 +3,7 @@ scalaVersion in ThisBuild := "2.12.4"
 lazy val `scalajs-io` = project
   .in(file("modules") / "io")
   .settings(
-    libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect" % "0.5"
-    )
+    libraryDependencies += "org.typelevel" %%% "cats-effect" % "0.5"
   )
   .enablePlugins(ScalaJSPlugin)
 
@@ -18,17 +16,52 @@ lazy val `scalajs-node-fetch` = project
   .in(file("modules") / "node-fetch")
   .dependsOn(`scalajs-fetch`)
   .settings(
-    npmDependencies in Compile ++= Seq(
-      "node-fetch" -> "1.7.3"
-    )
+    npmDependencies in Compile += "node-fetch" -> "1.7.3"
   )
   .enablePlugins(ScalaJSBundlerPlugin)
 
-lazy val `scalajs-apollo` = project
-  .in(file("modules") / "apollo")
+lazy val `scalajs-apollo-link` = project
+  .in(file("modules") / "apollo-link")
+  .settings(
+    npmDependencies in Compile += "apollo-link" -> "1.0.0"
+  )
+  .enablePlugins(ScalaJSBundlerPlugin)
+
+lazy val `scalajs-apollo-link-http` = project
+  .in(file("modules") / "apollo-link-http")
   .dependsOn(
+    `scalajs-apollo-link`,
     `scalajs-fetch`,
     `scalajs-node-fetch` % Test
+  )
+  .settings(
+    npmDependencies in Compile += "apollo-link-http" -> "1.1.0"
+  )
+  .enablePlugins(ScalaJSBundlerPlugin)
+
+lazy val `scalajs-apollo-cache` = project
+  .in(file("modules") / "apollo-cache")
+  .settings(
+    npmDependencies in Compile += "apollo-cache" -> "1.0.0"
+  )
+  .enablePlugins(ScalaJSBundlerPlugin)
+
+lazy val `scalajs-apollo-cache-inmemory` = project
+  .in(file("modules") / "apollo-cache-inmemory")
+  .dependsOn(`scalajs-apollo-cache`)
+  .settings(
+    npmDependencies in Compile += "apollo-cache-inmemory" -> "1.0.0"
+  )
+  .enablePlugins(ScalaJSBundlerPlugin)
+
+lazy val `scalajs-apollo-client` = project
+  .in(file("modules") / "apollo-client")
+  .dependsOn(
+    `scalajs-apollo-link`,
+    `scalajs-apollo-cache`,
+    `scalajs-node-fetch` % Test,
+    `scalajs-apollo-link-http` % Test,
+    `scalajs-apollo-cache-inmemory` % Test
   )
   .settings(
     libraryDependencies ++= Seq(
@@ -38,12 +71,8 @@ lazy val `scalajs-apollo` = project
       "com.github.japgolly.scalajs-react" %%% "core" % "1.1.1"
     ),
 
-    npmDependencies in Test ++= Seq(
-      "apollo-cache" -> "1.0.0",
-      "apollo-cache-inmemory" -> "1.0.0",
+    npmDependencies in Compile ++= Seq(
       "apollo-client" -> "2.0.1",
-      "apollo-link" -> "1.0.0",
-      "apollo-link-http" -> "1.1.0",
       "graphql" -> "0.11.7",
       "react" -> "15.6.2",
       "react-apollo" -> "2.0.0",
