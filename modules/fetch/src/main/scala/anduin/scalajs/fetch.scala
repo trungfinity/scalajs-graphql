@@ -1,5 +1,8 @@
 package anduin.scalajs
 
+import anduin.scalajs.io.implicits._
+import cats.effect.IO
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSImport, JSName}
 import scala.scalajs.js.|
@@ -20,7 +23,7 @@ object fetch {
     type Raw <: fetch.raw.Fetch
     val raw: Raw
 
-    def apply(url: String): js.Promise[js.Any] = raw.apply(url, js.undefined)
-    def apply(url: String, init: js.Any): js.Promise[js.Any] = raw.apply(url, init)
+    def apply(url: String): IO[js.Any] = raw.apply(url, js.undefined).toCatsIO
+    def apply(url: String, init: js.Any): IO[js.Any] = raw.apply(url, init).toCatsIO
   }
 }
