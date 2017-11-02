@@ -10,7 +10,7 @@ object nodefetch {
     @JSImport("node-fetch", JSImport.Namespace)
     @js.native
     object NodeFetch extends fetch.raw.Fetch {
-      @JSName(JSImport.Default) val apply: anduin.scalajs.fetch.raw.FetchFn = js.native
+      @JSName(JSImport.Default) val fetch: anduin.scalajs.fetch.raw.FetchFn = js.native
     }
   }
 

@@ -50,7 +50,7 @@ object link {
     val raw = new link.raw.ApolloHttpLink(
       new link.raw.ApolloHttpLinkOptions(
         options.uri,
-        options.fetch.raw.apply
+        options.fetch.raw.fetch
       )
     )
   }

@@ -14,7 +14,7 @@ object fetch {
     type FetchFn = js.Function2[String | js.Any, js.UndefOr[js.Any], js.Promise[js.Any]]
 
     trait Fetch extends js.Object {
-      @JSName(JSImport.Default) val apply: FetchFn
+      @JSName(JSImport.Default) val fetch: FetchFn
     }
   }
 
@@ -23,7 +23,7 @@ object fetch {
     type Raw <: fetch.raw.Fetch
     val raw: Raw
 
-    def apply(url: String): IO[js.Any] = raw.apply(url, js.undefined).toCatsIO
-    def apply(url: String, init: js.Any): IO[js.Any] = raw.apply(url, init).toCatsIO
+    def apply(url: String): IO[js.Any] = raw.fetch(url, js.undefined).toCatsIO
+    def apply(url: String, init: js.Any): IO[js.Any] = raw.fetch(url, init).toCatsIO
   }
 }
