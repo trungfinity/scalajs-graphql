@@ -3,7 +3,7 @@ package anduin.scalajs.apollo
 import anduin.scalajs.apollo.cache.ApolloInMemoryCache
 import anduin.scalajs.apollo.client.ApolloClient
 import anduin.scalajs.apollo.link.ApolloHttpLink
-import anduin.scalajs.nodefetch
+import anduin.scalajs.nodefetch.NodeFetch
 import org.scalatest.{FlatSpec, Matchers}
 
 final class ClientSpec extends FlatSpec with Matchers {
@@ -14,7 +14,7 @@ final class ClientSpec extends FlatSpec with Matchers {
     val client = new ApolloClient(
       link = new ApolloHttpLink(
         uri = "/graphql",
-        fetch = nodefetch.fetch
+        fetch = NodeFetch
       ),
       cache = new ApolloInMemoryCache()
     )
