@@ -9,7 +9,7 @@ import scala.scalajs.js.annotation.JSImport
 
 object client {
 
-  private[apollo] object raw {
+  object raw {
 
     final class ApolloClientOptions(
       val link: apollo.link.raw.ApolloLink,
@@ -38,7 +38,7 @@ object client {
       ))
     }
 
-    private[apollo] val raw = new client.raw.ApolloClient(
+    val raw = new client.raw.ApolloClient(
       new client.raw.ApolloClientOptions(
         options.link.raw,
         options.cache.raw

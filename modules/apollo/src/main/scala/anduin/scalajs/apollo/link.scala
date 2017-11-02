@@ -5,7 +5,7 @@ import scala.scalajs.js.annotation.JSImport
 
 object link {
 
-  private[apollo] object raw {
+  object raw {
 
     @JSImport("apollo-link", "ApolloLink", "ApolloLink.ApolloLink")
     @js.native
@@ -22,8 +22,8 @@ object link {
   }
 
   trait ApolloLink {
-    private[apollo] type Raw <: link.raw.ApolloLink
-    private[apollo] val raw: Raw
+    type Raw <: link.raw.ApolloLink
+    val raw: Raw
   }
 
   final case class ApolloHttpLinkOptions(
@@ -43,9 +43,9 @@ object link {
       ))
     }
 
-    private[apollo] type Raw = link.raw.ApolloHttpLink
+    type Raw = link.raw.ApolloHttpLink
 
-    private[apollo] val raw = new link.raw.ApolloHttpLink(
+    val raw = new link.raw.ApolloHttpLink(
       new link.raw.ApolloHttpLinkOptions(
         options.uri,
         options.fetch
