@@ -1,11 +1,13 @@
 package anduin.scalajs.apollo
 
+import anduin.scalajs.fetch.Fetch
+
 import scala.scalajs.js
 import scala.scalajs.js.annotation.JSImport
 
 object link {
 
-  private[apollo] object raw {
+  object raw {
 
     @JSImport("apollo-link", "ApolloLink", "ApolloLink.ApolloLink")
     @js.native
@@ -13,7 +15,7 @@ object link {
 
     final class ApolloHttpLinkOptions(
       val uri: String,
-      val fetch: js.Any
+      val fetch: anduin.scalajs.fetch.raw.FetchFn
     ) extends js.Object
 
     @JSImport("apollo-link-http", "HttpLink", "ApolloLinkHttp.HttpLink")
@@ -22,20 +24,20 @@ object link {
   }
 
   trait ApolloLink {
-    private[apollo] type Raw <: link.raw.ApolloLink
-    private[apollo] val raw: Raw
+    type Raw <: link.raw.ApolloLink
+    val raw: Raw
   }
 
   final case class ApolloHttpLinkOptions(
     uri: String,
-    fetch: js.Any
+    fetch: Fetch
   )
 
   final class ApolloHttpLink(options: ApolloHttpLinkOptions) extends ApolloLink {
 
     def this(
       uri: String,
-      fetch: js.Any
+      fetch: Fetch
     ) = {
       this(ApolloHttpLinkOptions(
         uri,
@@ -43,12 +45,12 @@ object link {
       ))
     }
 
-    private[apollo] type Raw = link.raw.ApolloHttpLink
+    type Raw = link.raw.ApolloHttpLink
 
-    private[apollo] val raw = new link.raw.ApolloHttpLink(
+    val raw = new link.raw.ApolloHttpLink(
       new link.raw.ApolloHttpLinkOptions(
         options.uri,
-        options.fetch
+        options.fetch.raw.fetch
       )
     )
   }

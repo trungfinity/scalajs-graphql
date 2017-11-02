@@ -5,7 +5,7 @@ import scala.scalajs.js.annotation.JSImport
 
 object cache {
 
-  private[apollo] object raw {
+  object raw {
 
     @JSImport("apollo-cache", "ApolloCache", "ApolloCache.ApolloCache")
     @js.native
@@ -21,8 +21,8 @@ object cache {
   }
 
   trait ApolloCache {
-    private[apollo] type Raw <: cache.raw.ApolloCache
-    private[apollo] val raw: Raw
+    type Raw <: cache.raw.ApolloCache
+    val raw: Raw
   }
 
   final case class ApolloInMemoryCacheOptions(
@@ -39,9 +39,9 @@ object cache {
       ))
     }
 
-    private[apollo] type Raw = cache.raw.ApolloInMemoryCache
+    type Raw = cache.raw.ApolloInMemoryCache
 
-    private[apollo] val raw = new cache.raw.ApolloInMemoryCache(
+    val raw = new cache.raw.ApolloInMemoryCache(
       new cache.raw.ApolloInMemoryCacheOptions(
         options.addTypename
       )
