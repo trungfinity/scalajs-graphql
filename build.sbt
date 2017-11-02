@@ -4,7 +4,6 @@ lazy val `scalajs-io` = project
   .in(file("modules") / "io")
   .settings(
     libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.4" % Test,
       "org.typelevel" %%% "cats-effect" % "0.5"
     )
   )
@@ -13,29 +12,12 @@ lazy val `scalajs-io` = project
 lazy val `scalajs-fetch` = project
   .in(file("modules") / "fetch")
   .dependsOn(`scalajs-io`)
-  .settings(
-    libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.4" % Test
-    ),
-
-    scalacOptions ++= Seq(
-      "-P:scalajs:sjsDefinedByDefault"
-    )
-  )
   .enablePlugins(ScalaJSBundlerPlugin)
 
 lazy val `scalajs-node-fetch` = project
   .in(file("modules") / "node-fetch")
   .dependsOn(`scalajs-fetch`)
   .settings(
-    libraryDependencies ++= Seq(
-      "org.scalatest" %%% "scalatest" % "3.0.4" % Test
-    ),
-
-    scalacOptions ++= Seq(
-      "-P:scalajs:sjsDefinedByDefault"
-    ),
-
     npmDependencies in Compile ++= Seq(
       "node-fetch" -> "1.7.3"
     )
@@ -51,14 +33,9 @@ lazy val `scalajs-apollo` = project
   .settings(
     libraryDependencies ++= Seq(
       compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
-      "org.scalatest" %%% "scalatest" % "3.0.4" % Test,
       "io.circe" %%% "circe-generic" % "0.9.0-M2",
       "io.circe" %%% "circe-scalajs" % "0.9.0-M2",
       "com.github.japgolly.scalajs-react" %%% "core" % "1.1.1"
-    ),
-
-    scalacOptions ++= Seq(
-      "-P:scalajs:sjsDefinedByDefault"
     ),
 
     npmDependencies in Test ++= Seq(
