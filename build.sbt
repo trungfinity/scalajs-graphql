@@ -47,6 +47,16 @@ lazy val `scalajs-apollo-link-http` = project
   )
   .enablePlugins(ScalaJSBundlerPlugin)
 
+lazy val `scalajs-apollo-link-mock` = project
+  .in(file("modules") / "apollo-link-mock")
+  .dependsOn(`scalajs-apollo-link`)
+  .settings(
+    npmDependencies in Compile ++= Seq(
+      "graphql" -> "0.11.7"
+    )
+  )
+  .enablePlugins(ScalaJSBundlerPlugin)
+
 lazy val `scalajs-apollo-cache` = project
   .in(file("modules") / "apollo-cache")
   .settings(
@@ -86,6 +96,7 @@ lazy val `scalajs-react-apollo` = project
   .in(file("modules") / "react-apollo")
   .dependsOn(
     `scalajs-apollo-client`,
+    `scalajs-apollo-link-mock` % Test,
     `scalajs-apollo-cache-inmemory` % Test
   )
   .settings(
