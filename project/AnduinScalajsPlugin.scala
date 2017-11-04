@@ -20,7 +20,8 @@ object AnduinScalajsPlugin extends AutoPlugin {
       "-deprecation",
       "-feature",
       "-P:scalajs:sjsDefinedByDefault"
-    )
+    ),
+    parallelExecution in Test := false
   )
 
   override lazy val buildSettings: Seq[Def.Setting[_]] = Seq(

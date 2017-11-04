@@ -19,7 +19,7 @@ final class PromiseOps[A](val promise: js.Promise[A]) extends AnyVal {
 
   def toCatsIO: IO[A] = {
     IO.async { callback =>
-      promise.then[Unit](
+      promise.`then`[Unit](
         { value =>
           callback(Right(value))
         },
