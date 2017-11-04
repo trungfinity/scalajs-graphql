@@ -85,7 +85,7 @@ final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
   println(ReactDOMServer.renderToString(root))
   // scalastyle:on magic.number token
 
-  internal.ReactApollo.renderToStringWithData(root).then[Unit] { result =>
+  internal.ReactApollo.renderToStringWithData(root).`then`[Unit] { result =>
     println(result)
   }
 }
