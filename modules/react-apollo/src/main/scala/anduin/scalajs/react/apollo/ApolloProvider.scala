@@ -1,11 +1,17 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 package anduin.scalajs.react.apollo
+
+import scala.scalajs.js
+
+import japgolly.scalajs.react.vdom.VdomNode
 
 import anduin.scalajs.apollo.client.ApolloClient
 import anduin.scalajs.apollo.client.internal.{ApolloClient => RawApolloClient}
-import japgolly.scalajs.react._
-import japgolly.scalajs.react.vdom.VdomNode
 
-import scala.scalajs.js
+// scalastyle:off underscore.import
+import japgolly.scalajs.react._
+// scalastyle:on underscore.import
 
 object ApolloProvider {
 

@@ -1,9 +1,14 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 package anduin.scalajs.fetch
 
-import anduin.scalajs.io.implicits._
+import scala.scalajs.js
+
 import cats.effect.IO
 
-import scala.scalajs.js
+// scalastyle:off underscore.import
+import anduin.scalajs.io.implicits._
+// scalastyle:on underscore.import
 
 trait Fetch {
 

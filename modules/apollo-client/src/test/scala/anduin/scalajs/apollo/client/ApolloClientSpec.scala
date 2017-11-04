@@ -1,9 +1,12 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 package anduin.scalajs.apollo.client
+
+import org.scalatest.{FlatSpec, Matchers}
 
 import anduin.scalajs.apollo.cache.ApolloInMemoryCache
 import anduin.scalajs.apollo.link.ApolloHttpLink
 import anduin.scalajs.nodefetch.NodeFetch
-import org.scalatest.{FlatSpec, Matchers}
 
 final class ApolloClientSpec extends FlatSpec with Matchers {
 
@@ -18,6 +21,6 @@ final class ApolloClientSpec extends FlatSpec with Matchers {
       cache = new ApolloInMemoryCache()
     )
 
-    client should not be null
+    client should not be null // scalastyle:ignore null
   }
 }

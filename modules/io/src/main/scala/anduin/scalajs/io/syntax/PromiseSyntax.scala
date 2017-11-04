@@ -1,10 +1,12 @@
-package anduin.scalajs.io.syntax
+// Copyright (C) 2017 Anduin Transactions, Inc.
 
-import cats.effect.IO
+package anduin.scalajs.io.syntax
 
 import scala.language.implicitConversions
 import scala.scalajs.js
 import scala.scalajs.js.JavaScriptException
+
+import cats.effect.IO
 
 trait PromiseSyntax {
 

@@ -1,3 +1,5 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 package anduin.scalajs.apollo.link
 
 import anduin.scalajs.fetch.Fetch

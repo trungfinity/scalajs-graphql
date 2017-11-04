@@ -1,9 +1,11 @@
-package anduin.scalajs.nodefetch
+// Copyright (C) 2017 Anduin Transactions, Inc.
 
-import anduin.scalajs.fetch.internal.{Fetch, FetchFn}
+package anduin.scalajs.nodefetch
 
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSImport, JSName}
+
+import anduin.scalajs.fetch.internal.{Fetch, FetchFn}
 
 object internal {
 

@@ -1,9 +1,13 @@
-package anduin.scalajs.react.apollo
+// Copyright (C) 2017 Anduin Transactions, Inc.
 
-import japgolly.scalajs.react._
+package anduin.scalajs.react.apollo
 
 import scala.language.higherKinds
 import scala.scalajs.js
+
+// scalastyle:off underscore.import
+import japgolly.scalajs.react._
+// scalastyle:on underscore.import
 
 object ReactApollo {
 
@@ -12,6 +16,6 @@ object ReactApollo {
   ): JsComponent[P, _, CT] => JsComponent[V, _, CT] = {
     internal.ReactApollo
       .graphql(query.raw)
-      .asInstanceOf[JsComponent[P, _, CT] => JsComponent[V, _, CT]]
+      .asInstanceOf[JsComponent[P, _, CT] => JsComponent[V, _, CT]] // scalastyle:ignore token
   }
 }

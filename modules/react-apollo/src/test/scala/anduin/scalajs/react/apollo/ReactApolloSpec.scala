@@ -1,4 +1,11 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 package anduin.scalajs.react.apollo
+
+import scala.scalajs.js
+
+import japgolly.scalajs.react.raw.{React, ReactClassUntyped, ReactDOMServer}
+import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 import anduin.scalajs.apollo.cache.internal.{ApolloInMemoryCache, ApolloInMemoryCacheOptions}
 import anduin.scalajs.apollo.client.internal.{ApolloClient, ApolloClientOptions}
@@ -8,11 +15,10 @@ import anduin.scalajs.apollo.graphqltools.internal.{
   SchemaMockFunctionsOptions
 }
 import anduin.scalajs.apollo.link.internal.{ApolloMockLink, ApolloMockLinkOptions}
-import japgolly.scalajs.react.raw.{React, ReactClassUntyped, ReactDOMServer}
-import japgolly.scalajs.react.vdom.html_<^._
-import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
-import scala.scalajs.js
+// scalastyle:off underscore.import
+import japgolly.scalajs.react.vdom.html_<^._
+// scalastyle:on underscore.import
 
 final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
 
@@ -22,17 +28,14 @@ final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
   private[this] final class Vars(val id: Int) extends js.Object
 
   private[this] val component = { props: Props =>
-    val userOrUndef = props.data.user
-
-    userOrUndef
-      .map { user =>
+    props.data.user
+      .fold {
+        <.div("Loading")
+      } { user =>
         <.div(
           s"ID: ${user.id}",
-          s"Name: ${user.name}",
+          s"Name: ${user.name}"
         )
-      }
-      .getOrElse {
-        <.div("Loading")
       }
       .render
       .rawElement
@@ -69,7 +72,8 @@ final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
     )
   )
 
-  private[this] val any = internal.ReactApollo.graphql(query.raw)(component)
+  // scalastyle:off magic.number token
+  private[this] val any = internal.ReactApollo.graphql(query.raw)(component _)
   private[this] val element = React.createElement(any.asInstanceOf[ReactClassUntyped], new Vars(10))
   private[this] val root = React.createElement(
     internal.ApolloProvider.asInstanceOf[ReactClassUntyped],
@@ -79,6 +83,7 @@ final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
 
   println(ReactDOMServer.renderToString(component(new Props(new Data(new User(10, "Hello"))))))
   println(ReactDOMServer.renderToString(root))
+  // scalastyle:on magic.number token
 
   internal.ReactApollo.renderToStringWithData(root).then[Unit] { result =>
     println(result)
