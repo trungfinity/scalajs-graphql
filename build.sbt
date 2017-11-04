@@ -1,5 +1,7 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
+// scalastyle:off multiple.string.literals
+
 scalaVersion in ThisBuild := "2.12.4"
 
 lazy val `scalajs-io` = project
@@ -98,7 +100,8 @@ lazy val `scalajs-apollo-client` = project
   )
   .settings(
     npmDependencies in Compile ++= Seq(
-      "apollo-client" -> "2.0.1"
+      "apollo-client" -> "2.0.1",
+      "graphql" -> "0.11.7"
     )
   )
   .enablePlugins(ScalaJSBundlerPlugin)
@@ -119,7 +122,6 @@ lazy val `scalajs-react-apollo` = project
       "com.github.japgolly.scalajs-react" %%% "core" % "1.1.1"
     ),
     npmDependencies in Compile ++= Seq(
-      "graphql" -> "0.11.7",
       "graphql-tag" -> "2.5.0",
       "react" -> "15.6.2",
       "react-apollo" -> "2.0.0",
