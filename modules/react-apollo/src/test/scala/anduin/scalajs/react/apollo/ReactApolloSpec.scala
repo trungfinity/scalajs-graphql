@@ -73,7 +73,7 @@ final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
   )
 
   // scalastyle:off magic.number token
-  private[this] val any = internal.ReactApollo.graphql(query.raw)(component _)
+  private[this] val any = internal.ReactApollo.graphql(query.raw)(component)
   private[this] val element = React.createElement(any.asInstanceOf[ReactClassUntyped], new Vars(10))
   private[this] val root = React.createElement(
     internal.ApolloProvider.asInstanceOf[ReactClassUntyped],
