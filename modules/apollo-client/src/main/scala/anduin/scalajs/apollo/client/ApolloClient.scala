@@ -1,3 +1,5 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 package anduin.scalajs.apollo.client
 
 import anduin.scalajs.apollo.cache.ApolloCache

@@ -1,3 +1,5 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 scalaVersion in ThisBuild := "2.12.4"
 
 lazy val `scalajs-io` = project

@@ -1,3 +1,5 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 package anduin.scalajs.nodefetch
 
 import anduin.scalajs.fetch.internal.{Fetch, FetchFn}

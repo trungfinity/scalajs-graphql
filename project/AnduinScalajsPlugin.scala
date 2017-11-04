@@ -1,3 +1,5 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._

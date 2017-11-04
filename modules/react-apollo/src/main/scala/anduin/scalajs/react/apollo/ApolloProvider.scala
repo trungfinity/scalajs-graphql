@@ -1,3 +1,5 @@
+// Copyright (C) 2017 Anduin Transactions, Inc.
+
 package anduin.scalajs.react.apollo
 
 import anduin.scalajs.apollo.client.ApolloClient
