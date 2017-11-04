@@ -24,6 +24,15 @@ lazy val `scalajs-node-fetch` = project
   )
   .enablePlugins(ScalaJSBundlerPlugin)
 
+lazy val `scalajs-apollo-graphql-tools` = project
+  .in(file("modules") / "apollo-graphql-tools")
+  .settings(
+    npmDependencies in Compile ++= Seq(
+      "graphql-tools" -> "2.7.2"
+    )
+  )
+  .enablePlugins(ScalaJSBundlerPlugin)
+
 lazy val `scalajs-apollo-link` = project
   .in(file("modules") / "apollo-link")
   .settings(
@@ -96,6 +105,7 @@ lazy val `scalajs-react-apollo` = project
   .in(file("modules") / "react-apollo")
   .dependsOn(
     `scalajs-apollo-client`,
+    `scalajs-apollo-graphql-tools` % Test,
     `scalajs-apollo-link-mock` % Test,
     `scalajs-apollo-cache-inmemory` % Test
   )
@@ -110,10 +120,8 @@ lazy val `scalajs-react-apollo` = project
     ),
 
     npmDependencies in Compile ++= Seq(
-      "apollo-link-core" -> "0.5.4",
       "graphql" -> "0.11.7",
       "graphql-tag" -> "2.5.0",
-      "graphql-tools" -> "2.7.2",
       "react" -> "15.6.2",
       "react-apollo" -> "2.0.0",
       "react-dom" -> "15.6.2"
