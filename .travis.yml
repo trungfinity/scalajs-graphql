@@ -1,0 +1,34 @@
+language: scala
+sudo: false
+dist: trusty
+
+scala:
+  - 2.12.4
+
+jdk:
+  - oraclejdk8
+
+cache:
+  directories:
+  - $HOME/.sbt/0.13/dependency
+  - $HOME/.sbt/boot/scala*
+  - $HOME/.sbt/launchers
+  - $HOME/.ivy2/cache
+  - $HOME/.nvm
+
+before_cache:
+  - find $HOME/.sbt -name "*.lock" -type f -delete
+  - find $HOME/.ivy2/cache -name "ivydata-*.properties" -type f -delete
+
+install:
+  - . $HOME/.nvm/nvm.sh
+  - nvm install stable
+  - nvm use stable
+
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION scalafmt::test test:scalafmt::test sbt:scalafmt::test
+  - sbt ++$TRAVIS_SCALA_VERSION "reload plugins" scalafmt::test sbt:scalafmt::test
+  - sbt ++$TRAVIS_SCALA_VERSION scalastyle test:scalastyle
+  - sbt ++$TRAVIS_SCALA_VERSION test:fastOptJS test:fullOptJS
+  - sbt ++$TRAVIS_SCALA_VERSION 'set parallelExecution in ThisBuild := false' test
+  - sbt ++$TRAVIS_SCALA_VERSION 'set parallelExecution in ThisBuild := false' 'set scalaJSStage in ThisBuild := FullOptStage' test
