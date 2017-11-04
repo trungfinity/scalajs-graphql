@@ -7,9 +7,11 @@ final class ApolloInMemoryCache(options: ApolloInMemoryCacheOptions) extends Apo
   def this(
     addTypename: js.UndefOr[Boolean] = js.undefined
   ) = {
-    this(ApolloInMemoryCacheOptions(
-      addTypename
-    ))
+    this(
+      ApolloInMemoryCacheOptions(
+        addTypename
+      )
+    )
   }
 
   type Raw = internal.ApolloInMemoryCache

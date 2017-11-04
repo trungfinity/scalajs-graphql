@@ -112,13 +112,10 @@ lazy val `scalajs-react-apollo` = project
   .settings(
     libraryDependencies ++= Seq(
       compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
-
       "io.circe" %%% "circe-generic" % "0.9.0-M2",
       "io.circe" %%% "circe-scalajs" % "0.9.0-M2",
-
       "com.github.japgolly.scalajs-react" %%% "core" % "1.1.1"
     ),
-
     npmDependencies in Compile ++= Seq(
       "graphql" -> "0.11.7",
       "graphql-tag" -> "2.5.0",

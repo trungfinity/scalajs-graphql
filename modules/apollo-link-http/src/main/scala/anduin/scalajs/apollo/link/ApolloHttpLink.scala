@@ -8,10 +8,12 @@ final class ApolloHttpLink(options: ApolloHttpLinkOptions) extends ApolloLink {
     uri: String,
     fetch: Fetch
   ) = {
-    this(ApolloHttpLinkOptions(
-      uri,
-      fetch
-    ))
+    this(
+      ApolloHttpLinkOptions(
+        uri,
+        fetch
+      )
+    )
   }
 
   type Raw = internal.ApolloHttpLink
