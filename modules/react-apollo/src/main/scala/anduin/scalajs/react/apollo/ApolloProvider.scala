@@ -2,12 +2,16 @@
 
 package anduin.scalajs.react.apollo
 
-import anduin.scalajs.apollo.client.ApolloClient
-import anduin.scalajs.apollo.client.internal.{ApolloClient => RawApolloClient}
-import japgolly.scalajs.react._
+import scala.scalajs.js
+
 import japgolly.scalajs.react.vdom.VdomNode
 
-import scala.scalajs.js
+import anduin.scalajs.apollo.client.ApolloClient
+import anduin.scalajs.apollo.client.internal.{ApolloClient => RawApolloClient}
+
+// scalastyle:off underscore.import
+import japgolly.scalajs.react._
+// scalastyle:on underscore.import
 
 object ApolloProvider {
 

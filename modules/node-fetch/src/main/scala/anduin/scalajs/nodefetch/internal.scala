@@ -2,10 +2,10 @@
 
 package anduin.scalajs.nodefetch
 
-import anduin.scalajs.fetch.internal.{Fetch, FetchFn}
-
 import scala.scalajs.js
 import scala.scalajs.js.annotation.{JSImport, JSName}
+
+import anduin.scalajs.fetch.internal.{Fetch, FetchFn}
 
 object internal {
 

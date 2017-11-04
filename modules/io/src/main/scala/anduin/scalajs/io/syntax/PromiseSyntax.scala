@@ -2,11 +2,11 @@
 
 package anduin.scalajs.io.syntax
 
-import cats.effect.IO
-
 import scala.language.implicitConversions
 import scala.scalajs.js
 import scala.scalajs.js.JavaScriptException
+
+import cats.effect.IO
 
 trait PromiseSyntax {
 
