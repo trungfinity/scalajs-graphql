@@ -1,4 +1,3 @@
 package anduin.scalajs.io.syntax
 
-trait AllSyntax
-  extends PromiseSyntax
+trait AllSyntax extends PromiseSyntax

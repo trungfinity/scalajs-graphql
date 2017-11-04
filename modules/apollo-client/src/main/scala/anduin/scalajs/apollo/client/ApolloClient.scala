@@ -12,11 +12,13 @@ final class ApolloClient(options: ApolloClientOptions) {
     cache: ApolloCache,
     ssrMode: js.UndefOr[Boolean] = js.undefined
   ) = {
-    this(ApolloClientOptions(
-      link,
-      cache,
-      ssrMode
-    ))
+    this(
+      ApolloClientOptions(
+        link,
+        cache,
+        ssrMode
+      )
+    )
   }
 
   val raw = new internal.ApolloClient(

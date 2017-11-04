@@ -2,7 +2,11 @@ package anduin.scalajs.react.apollo
 
 import anduin.scalajs.apollo.cache.internal.{ApolloInMemoryCache, ApolloInMemoryCacheOptions}
 import anduin.scalajs.apollo.client.internal.{ApolloClient, ApolloClientOptions}
-import anduin.scalajs.apollo.graphqltools.internal.{ExecutableSchemaOptions, GraphqlTools, SchemaMockFunctionsOptions}
+import anduin.scalajs.apollo.graphqltools.internal.{
+  ExecutableSchemaOptions,
+  GraphqlTools,
+  SchemaMockFunctionsOptions
+}
 import anduin.scalajs.apollo.link.internal.{ApolloMockLink, ApolloMockLinkOptions}
 import japgolly.scalajs.react.raw.{React, ReactClassUntyped, ReactDOMServer}
 import japgolly.scalajs.react.vdom.html_<^._
