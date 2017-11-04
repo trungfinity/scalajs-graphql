@@ -7,5 +7,6 @@ import scala.scalajs.js
 
 final class ApolloClientOptions(
   val link: ApolloLink,
-  val cache: ApolloCache
+  val cache: ApolloCache,
+  val ssrMode: js.UndefOr[Boolean] = js.undefined
 ) extends js.Object
