@@ -4,7 +4,7 @@ package anduin.scalajs.react.apollo
 
 import scala.scalajs.js
 
-import japgolly.scalajs.react.raw.{React, ReactClassUntyped, ReactDOMServer}
+import japgolly.scalajs.react.raw.{React, ReactClassUntyped, ReactCtor, ReactDOMServer}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 import anduin.scalajs.apollo.cache.internal.{ApolloInMemoryCache, ApolloInMemoryCacheOptions}
@@ -34,6 +34,7 @@ final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
       } { user =>
         <.div(
           s"ID: ${user.id}",
+          <.br(),
           s"Name: ${user.name}"
         )
       }
@@ -87,5 +88,9 @@ final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
 
   internal.ReactApollo.renderToStringWithData(root).`then`[Unit] { result =>
     println(result)
+  }
+
+  internal.ReactApollo.getDataFromTree(root).`then`[Unit] { _ =>
+    println(ReactDOMServer.renderToStaticMarkup(root))
   }
 }
