@@ -4,5 +4,7 @@ package anduin.scalajs.react.apollo.internal
 
 import scala.scalajs.js
 
-@js.native
-trait Query[Vars <: js.Object, Data <: js.Object] extends js.Object
+trait ApolloQueryProps[Data] extends js.Object {
+  val data: js.UndefOr[Data]
+  val loading: Boolean
+}

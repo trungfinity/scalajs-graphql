@@ -13,7 +13,9 @@ import japgolly.scalajs.react.raw._
 @js.native
 object ReactApollo extends js.Object {
 
-  def graphql(query: Query): js.Function1[js.Any, js.Any] = js.native
+  def graphql[Vars <: js.Object, Data <: js.Object](
+    query: Query[Vars, Data]
+  ): HigherOrderComponent[Vars, ApolloQueryProps[Data]] = js.native
 
   def getDataFromTree(component: ReactElement): js.Promise[Undefined] = js.native
   def renderToStringWithData(component: ReactElement): js.Promise[String] = js.native

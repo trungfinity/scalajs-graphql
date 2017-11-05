@@ -2,4 +2,8 @@
 
 package anduin.scalajs.react.apollo
 
-final case class Query[P, V](raw: internal.Query)
+import scala.scalajs.js
+
+final case class Query[Data <: js.Object, Vars <: js.Object](
+  raw: internal.Query[Data, Vars]
+)

@@ -5,17 +5,13 @@ package anduin.scalajs.react.apollo
 import scala.language.higherKinds
 import scala.scalajs.js
 
-// scalastyle:off underscore.import
-import japgolly.scalajs.react._
-// scalastyle:on underscore.import
+import anduin.scalajs.react.apollo.internal.{ApolloQueryProps, HigherOrderComponent}
 
 object ReactApollo {
 
-  def graphql[P <: js.Object, V <: js.Object, CT[-p, +u] <: CtorType[p, u]](
-    query: Query[P, V]
-  ): JsComponent[P, _, CT] => JsComponent[V, _, CT] = {
-    internal.ReactApollo
-      .graphql(query.raw)
-      .asInstanceOf[JsComponent[P, _, CT] => JsComponent[V, _, CT]] // scalastyle:ignore token
+  def graphql[Vars <: js.Object, Data <: js.Object](
+    query: Query[Vars, Data]
+  ): HigherOrderComponent[Vars, ApolloQueryProps[Data]] = {
+    internal.ReactApollo.graphql(query.raw)
   }
 }

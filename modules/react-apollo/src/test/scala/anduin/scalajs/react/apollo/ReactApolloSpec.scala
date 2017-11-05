@@ -4,7 +4,7 @@ package anduin.scalajs.react.apollo
 
 import scala.scalajs.js
 
-import japgolly.scalajs.react.raw.{React, ReactClassUntyped, ReactCtor, ReactDOMServer}
+import japgolly.scalajs.react.raw.{React, ReactClassUntyped, ReactDOMServer}
 import org.scalatest.{BeforeAndAfterAll, FlatSpec}
 
 import anduin.scalajs.apollo.cache.internal.{ApolloInMemoryCache, ApolloInMemoryCacheOptions}
@@ -78,7 +78,7 @@ final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
   private[this] val element = React.createElement(any.asInstanceOf[ReactClassUntyped], new Vars(10))
   private[this] val root = React.createElement(
     internal.ApolloProvider.asInstanceOf[ReactClassUntyped],
-    js.Dynamic.literal("client" -> client),
+    new internal.ApolloProviderProps(client),
     element
   )
 
