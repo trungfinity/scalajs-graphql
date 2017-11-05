@@ -1,6 +1,6 @@
 # anduin-scalajs
 
-[![Build Status](https://travis-ci.org/anduintransaction/anduin-facades.svg)](https://travis-ci.org/anduintransaction/anduin-facades)
+[![Build Status](https://travis-ci.org/anduintransaction/anduin-scalajs.svg)](https://travis-ci.org/anduintransaction/anduin-scalajs)
 
 [Anduin Transactions][anduin-url] [Scala.js][scalajs-url] libraries.
 
