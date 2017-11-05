@@ -2,9 +2,11 @@
 
 package anduin.scalajs.react.apollo
 
+import scala.scalajs.js
+
 object GraphqlTag {
 
-  def gql[P, V](queryString: String): Query[P, V] = {
-    Query[P, V](internal.GraphqlTag.gql(queryString))
+  def gql[Vars <: js.Object, Data <: js.Object](queryString: String): Query[Vars, Data] = {
+    Query(internal.GraphqlTag.gql[Vars, Data](queryString))
   }
 }
