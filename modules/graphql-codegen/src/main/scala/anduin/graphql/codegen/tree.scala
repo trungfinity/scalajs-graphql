@@ -13,7 +13,7 @@ private[codegen] object tree {
   final case class Operation(
     name: String,
     operationType: ast.OperationType,
-    tpe: CompositeField
+    underlying: CompositeField
   ) extends Tree
 
   sealed abstract class Field extends Tree {
@@ -22,7 +22,8 @@ private[codegen] object tree {
 
   final case class CompositeField(
     name: String,
-    fields: Fields
+    fields: Fields,
+    tpe: schema.CompositeType[_]
   ) extends Field
 
   final case class SimpleField(

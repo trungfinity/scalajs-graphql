@@ -28,14 +28,14 @@ private[codegen] final class Processor(schema: Schema[_, _], document: ast.Docum
             compositeType <- typeInfo.currentCompositeType
             subfields <- processSelections(astField.selections, compositeType)
           } yield {
-            tree.CompositeField(compositeType.name, subfields)
+            tree.CompositeField(compositeType.name, subfields, compositeType)
           }
 
         case objectType: ObjectType[_, _] =>
           for {
             subfields <- processSelections(astField.selections, objectType)
           } yield {
-            tree.CompositeField(objectType.name, subfields)
+            tree.CompositeField(objectType.name, subfields, objectType)
           }
 
         case _ =>
@@ -112,7 +112,7 @@ private[codegen] final class Processor(schema: Schema[_, _], document: ast.Docum
           tree.Operation(
             operationName,
             astOperation.operationType,
-            tree.CompositeField(objectType.name, fields)
+            tree.CompositeField(objectType.name, fields, objectType)
           )
         }
       }

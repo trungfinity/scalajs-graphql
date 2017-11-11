@@ -228,7 +228,7 @@ object Test extends App {
           print(": ")
 
           field match {
-            case tree.CompositeField(name, subfields) =>
+            case tree.CompositeField(name, subfields, _) =>
               println(name)
               printFields(subfields, indentation + 2)
 
@@ -241,11 +241,11 @@ object Test extends App {
     }
   }
 
-  new Processor(schema, document)
+  new Parser(schema, document)
     .parse()
     .getOrElse(throw new RuntimeException("This should not happen."))
     .foreach { operation =>
       println(operation.name)
-      printFields(operation.tpe.fields, 2)
+      printFields(operation.underlying.fields, 2)
     }
 }
