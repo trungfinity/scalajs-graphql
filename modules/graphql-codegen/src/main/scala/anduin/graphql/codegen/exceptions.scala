@@ -30,7 +30,7 @@ final case class OperationNotNamedException(
 sealed abstract class CodegenSystemException extends CodegenException {
 
   final def message: String = {
-    s"[$lineString:$columnString] $details." +
+    s"[$lineString:$columnString] $details" +
       "\n\nThis is likely an error from the code generator itself" +
       " which is not expected to happen." +
       " Please include the stack trace and report the issue at" +
