@@ -241,7 +241,7 @@ object Test extends App {
     }
   }
 
-  new Parser(schema, document)
+  new Parser(schema, document, sourceFile = None)
     .parse()
     .getOrElse(throw new RuntimeException("This should not happen."))
     .foreach { operation =>

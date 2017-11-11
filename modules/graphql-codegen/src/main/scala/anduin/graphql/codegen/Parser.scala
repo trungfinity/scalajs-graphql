@@ -2,6 +2,8 @@
 
 package anduin.graphql.codegen
 
+import java.io.File
+
 import sangria.ast
 
 // scalastyle:off underscore.import
@@ -9,10 +11,14 @@ import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
 
-private[codegen] final class Parser(schema: Schema[_, _], document: ast.Document) {
+private[codegen] final class Parser(
+  schema: Schema[_, _],
+  document: ast.Document,
+  sourceFile: Option[File]
+) {
 
-  private[this] val typeInfo = new TypeInfo(schema)
-  private[this] val typeQuery = new TypeQuery(schema, document)
+  private[this] val typeInfo = new TypeInfo(schema, sourceFile)
+  private[this] val typeQuery = new TypeQuery(schema, document, sourceFile)
 
   private[this] def parseField(
     astField: ast.Field,
@@ -103,7 +109,10 @@ private[codegen] final class Parser(schema: Schema[_, _], document: ast.Document
     astOperation: ast.OperationDefinition
   ): Result[tree.Operation] = {
     for {
-      operationName <- astOperation.name.toRight(OperationNotNamedException(astOperation))
+      operationName <- astOperation.name.toRight {
+        OperationNotNamedException(astOperation, sourceFile)
+      }
+
       operation <- typeInfo.scope(astOperation) {
         for {
           objectType <- typeInfo.currentObjectType
