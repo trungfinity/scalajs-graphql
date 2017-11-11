@@ -102,6 +102,9 @@ lazy val `scalajs-apollo-client` = project
   )
   .enablePlugins(ScalaJSBundlerPlugin)
 
+lazy val `graphql-codegen` = project
+  .in(file("modules") / "graphql-codegen")
+
 lazy val `scalajs-react-apollo` = project
   .in(file("modules") / "react-apollo")
   .dependsOn(
