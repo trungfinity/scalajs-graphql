@@ -109,7 +109,6 @@ lazy val `graphql-codegen` = project
       "org.typelevel" %% "cats-core" % "1.0.0-RC1",
       "org.sangria-graphql" %% "sangria" % "1.3.2"
     ),
-
     scalacOptions ++= Seq(
       "-Ypartial-unification"
     )
