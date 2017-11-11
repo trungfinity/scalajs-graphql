@@ -104,6 +104,16 @@ lazy val `scalajs-apollo-client` = project
 
 lazy val `graphql-codegen` = project
   .in(file("modules") / "graphql-codegen")
+  .settings(
+    libraryDependencies ++= Seq(
+      "org.typelevel" %% "cats-core" % "1.0.0-RC1",
+      "org.sangria-graphql" %% "sangria" % "1.3.2"
+    ),
+
+    scalacOptions ++= Seq(
+      "-Ypartial-unification"
+    )
+  )
 
 lazy val `scalajs-react-apollo` = project
   .in(file("modules") / "react-apollo")
