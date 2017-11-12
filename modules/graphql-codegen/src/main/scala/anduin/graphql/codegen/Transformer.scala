@@ -4,16 +4,15 @@ package anduin.graphql.codegen
 
 import java.io.File
 
-import sangria.ast.Document
+import sangria.{ast, schema => sc}
 
 // scalastyle:off underscore.import
 import cats.implicits._
-import sangria.schema._
 // scalastyle:on underscore.import
 
 private[codegen] final class Transformer(
-  schema: Schema[_, _],
-  document: Document,
+  schema: sc.Schema[_, _],
+  document: ast.Document,
   sourceFile: Option[File]
 ) {
 

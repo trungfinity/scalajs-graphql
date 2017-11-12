@@ -4,11 +4,10 @@ package anduin.graphql.codegen
 
 import java.io.File
 
-import sangria.ast
-import sangria.schema.{AbstractType, CompositeType, ObjectType, Schema, Type}
+import sangria.{ast, schema => sc}
 
 private[codegen] final class TypeQuery(
-  schema: Schema[_, _],
+  schema: sc.Schema[_, _],
   document: ast.Document,
   sourceFile: Option[File]
 ) {
@@ -19,43 +18,43 @@ private[codegen] final class TypeQuery(
       .toRight(FragmentNotFoundException(fragmentSpread, fragmentSpread.name, sourceFile))
   }
 
-  def findType(node: ast.AstNode, name: String): Result[Type] = {
+  def findType(node: ast.AstNode, name: String): Result[sc.Type] = {
     schema.allTypes
       .get(name)
       .toRight(TypeNotFoundException(node, name, sourceFile))
   }
 
-  def findCompositeType(node: ast.AstNode, name: String): Result[CompositeType[_]] = {
+  def findCompositeType(node: ast.AstNode, name: String): Result[sc.CompositeType[_]] = {
     for {
       tpe <- findType(node, name)
       compositeType <- tpe match {
-        case compositeType: CompositeType[_] =>
+        case compositeType: sc.CompositeType[_] =>
           Right(compositeType)
 
         case _ =>
-          val compositeTypeClass = classOf[CompositeType[_]]
+          val compositeTypeClass = classOf[sc.CompositeType[_]]
           Left(ExpectedTypeNotFoundException(node, name, tpe, compositeTypeClass, sourceFile))
       }
-    } yield compositeType: CompositeType[_]
+    } yield compositeType: sc.CompositeType[_]
   }
 
-  def findPossibleTypes(compositeType: CompositeType[_]): Result[Set[ObjectType[_, _]]] = {
+  def findPossibleTypes(compositeType: sc.CompositeType[_]): Result[Set[sc.ObjectType[_, _]]] = {
     compositeType match {
-      case abstractType: AbstractType =>
+      case abstractType: sc.AbstractType =>
         schema.possibleTypes
           .get(compositeType.name)
           .map(_.toSet)
           .toRight(PossibleTypesUnavailableException(abstractType, sourceFile))
 
-      case objectType: ObjectType[_, _] =>
+      case objectType: sc.ObjectType[_, _] =>
         Right(Set(objectType))
     }
   }
 
   def narrowPossibleTypes(
-    possibleTypes: Set[ObjectType[_, _]],
-    conditionType: CompositeType[_]
-  ): Result[Set[ObjectType[_, _]]] = {
+    possibleTypes: Set[sc.ObjectType[_, _]],
+    conditionType: sc.CompositeType[_]
+  ): Result[Set[sc.ObjectType[_, _]]] = {
     findPossibleTypes(conditionType).map(_.intersect(possibleTypes))
   }
 }

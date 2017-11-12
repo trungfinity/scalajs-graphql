@@ -4,54 +4,50 @@ package anduin.graphql.codegen
 
 import java.io.File
 
-import scala.meta
-
-import sangria.ast
+import sangria.{ast, schema => sc}
 
 // scalastyle:off underscore.import
-import scala.meta.{Type => _, _}
-
-import sangria.schema._
+import scala.meta._
 // scalastyle:on underscore.import
 
 final class Generator(
-  schema: Schema[_, _],
+  schema: sc.Schema[_, _],
   document: ast.Document,
   sourceFile: Option[File]
 ) {
 
   private[this] val typeQuery = new TypeQuery(schema, document, sourceFile)
 
-  private[this] def termParam(name: String, tpe: meta.Type): Term.Param = {
+  private[this] def termParam(name: String, tpe: Type): Term.Param = {
     Term.Param(List.empty, Term.Name(name), Some(tpe), None)
   }
 
-  def generateFieldType(field: tree.Field)(genType: Type => meta.Type): meta.Type = {
-    def typeOf(tpe: Type): meta.Type = tpe match {
-      case OptionType(wrapped) =>
+  def generateFieldType(field: tree.Field)(genType: sc.Type => Type): Type = {
+    def typeOf(tpe: sc.Type): Type = tpe match {
+      case sc.OptionType(wrapped) =>
         t"Option[${typeOf(wrapped)}]"
-      case OptionInputType(wrapped) =>
+      case sc.OptionInputType(wrapped) =>
         t"Option[${typeOf(wrapped)}]"
-      case ListType(wrapped) =>
+      case sc.ListType(wrapped) =>
         t"List[${typeOf(wrapped)}]"
-      case ListInputType(wrapped) =>
+      case sc.ListInputType(wrapped) =>
         t"List[${typeOf(wrapped)}]"
-      case tpe: ScalarType[_] if tpe == IDType =>
-        meta.Type.Name("ID")
-      case tpe: Type =>
+      case tpe: sc.ScalarType[_] if tpe == sc.IDType =>
+        Type.Name("ID")
+      case tpe: sc.Type =>
         genType(tpe)
     }
     typeOf(field.tpe)
   }
 
-  private[this] def fieldType(field: tree.Field, prefix: String = ""): meta.Type = {
+  private[this] def fieldType(field: tree.Field, prefix: String = ""): Type = {
     generateFieldType(field) { tpe =>
       field match {
         case _: tree.CompositeField =>
-          meta.Type.Name(prefix + "." + field.name.capitalize)
+          Type.Name(prefix + "." + field.name.capitalize)
 
         case _: tree.SimpleField =>
-          meta.Type.Name(tpe.namedType.name)
+          Type.Name(tpe.namedType.name)
       }
     }
   }
@@ -73,7 +69,7 @@ final class Generator(
 
         List(
           q"""
-            final case class ${meta.Type.Name(field.name.capitalize)}(
+            final case class ${Type.Name(field.name.capitalize)}(
               ..${generateFieldParams(fields, field.name)}
             )
           """,

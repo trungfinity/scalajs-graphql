@@ -4,15 +4,14 @@ package anduin.graphql.codegen
 
 import java.io.File
 
-import sangria.ast
+import sangria.{ast, schema => sc}
 
 // scalastyle:off underscore.import
 import cats.implicits._
-import sangria.schema._
 // scalastyle:on underscore.import
 
 private[codegen] final class Parser(
-  schema: Schema[_, _],
+  schema: sc.Schema[_, _],
   document: ast.Document,
   sourceFile: Option[File]
 ) {
@@ -22,14 +21,14 @@ private[codegen] final class Parser(
 
   private[this] def parseField(
     astField: ast.Field,
-    conditionType: CompositeType[_]
+    conditionType: sc.CompositeType[_]
   ): Result[tree.Fields] = {
     for {
       tpe <- typeInfo.currentType
       namedType <- typeInfo.currentNamedType
 
       field <- namedType match {
-        case _: AbstractType =>
+        case _: sc.AbstractType =>
           for {
             compositeType <- typeInfo.currentCompositeType
             subfields <- parseSelections(astField.selections, compositeType)
@@ -37,7 +36,7 @@ private[codegen] final class Parser(
             tree.CompositeField(astField.name, subfields, compositeType)
           }
 
-        case objectType: ObjectType[_, _] =>
+        case objectType: sc.ObjectType[_, _] =>
           for {
             subfields <- parseSelections(astField.selections, objectType)
           } yield {
@@ -68,7 +67,7 @@ private[codegen] final class Parser(
 
   private[this] def parseInlineFragment(
     inlineFragment: ast.InlineFragment,
-    conditionType: CompositeType[_]
+    conditionType: sc.CompositeType[_]
   ): Result[tree.Fields] = {
     for {
       nextConditionType <- inlineFragment.typeCondition match {
@@ -82,7 +81,7 @@ private[codegen] final class Parser(
 
   private[this] def parseSelection(
     selection: ast.Selection,
-    conditionType: CompositeType[_]
+    conditionType: sc.CompositeType[_]
   ): Result[tree.Fields] = {
     typeInfo.scope(selection) {
       selection match {
@@ -100,7 +99,7 @@ private[codegen] final class Parser(
 
   private[this] def parseSelections(
     selections: Vector[ast.Selection],
-    conditionType: CompositeType[_]
+    conditionType: sc.CompositeType[_]
   ): Result[tree.Fields] = {
     selections.foldMapM(parseSelection(_, conditionType))
   }

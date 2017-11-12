@@ -6,15 +6,14 @@ import java.io.File
 
 import scala.util.Try
 
-import sangria.ast
+import sangria.{ast, schema => sc}
 
 // scalastyle:off underscore.import
 import cats.implicits._
-import sangria.schema._
 // scalastyle:on underscore.import
 
 private[codegen] final class TypeInfo(
-  schema: Schema[_, _],
+  schema: sc.Schema[_, _],
   sourceFile: Option[File]
 ) {
 
@@ -34,14 +33,14 @@ private[codegen] final class TypeInfo(
     typeInfo.ancestors.lastOption.toRight(EmptyNodeStackException(sourceFile))
   }
 
-  def currentType: Result[Type] = {
+  def currentType: Result[sc.Type] = {
     for {
       node <- currentNode
       tpe <- typeInfo.tpe.toRight(TypeNotAvailableException(node, sourceFile))
     } yield tpe
   }
 
-  def currentNamedType: Result[Type with Named] = {
+  def currentNamedType: Result[sc.Type with sc.Named] = {
     for {
       node <- currentNode
       tpe <- currentType
@@ -51,7 +50,9 @@ private[codegen] final class TypeInfo(
     } yield namedType
   }
 
-  private[this] def specificCurrentType[A](filter: (ast.AstNode, Type) => Result[A]): Result[A] = {
+  private[this] def specificCurrentType[A](
+    filter: (ast.AstNode, sc.Type) => Result[A]
+  ): Result[A] = {
     for {
       node <- currentNode
       tpe <- currentType
@@ -59,20 +60,20 @@ private[codegen] final class TypeInfo(
     } yield specificType
   }
 
-  def currentCompositeType: Result[CompositeType[_]] = {
+  def currentCompositeType: Result[sc.CompositeType[_]] = {
     specificCurrentType { (node, tpe) =>
       tpe match {
-        case compositeType: CompositeType[_] => Right(compositeType)
-        case _ => Left(UnexpectedTypeException(node, tpe, classOf[CompositeType[_]], sourceFile))
+        case compositeType: sc.CompositeType[_] => Right(compositeType)
+        case _ => Left(UnexpectedTypeException(node, tpe, classOf[sc.CompositeType[_]], sourceFile))
       }
     }
   }
 
-  def currentObjectType: Result[ObjectType[_, _]] = {
+  def currentObjectType: Result[sc.ObjectType[_, _]] = {
     specificCurrentType { (node, tpe) =>
       tpe match {
-        case objectType: ObjectType[_, _] => Right(objectType)
-        case _ => Left(UnexpectedTypeException(node, tpe, classOf[ObjectType[_, _]], sourceFile))
+        case objectType: sc.ObjectType[_, _] => Right(objectType)
+        case _ => Left(UnexpectedTypeException(node, tpe, classOf[sc.ObjectType[_, _]], sourceFile))
       }
     }
   }
