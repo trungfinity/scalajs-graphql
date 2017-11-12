@@ -8,11 +8,16 @@ import sangria.{ast, schema => sc}
 
 // scalastyle:off underscore.import
 import scala.meta._
+
+import cats.implicits._
 // scalastyle:on underscore.import
 
 // scalastyle:off multiple.string.literals
 
-final class Generator(sourceFile: Option[File]) {
+final class Generator(
+  transformer: Transformer,
+  sourceFile: Option[File]
+) {
 
   private[this] def generateFieldType(field: tree.Field, parentClassName: String): Type = {
     val innermostType = field match {
@@ -62,50 +67,97 @@ final class Generator(sourceFile: Option[File]) {
     }
   }
 
-  private[this] def generateSubfieldTypes(fields: List[tree.Field]): List[Stat] = {
-    fields.flatMap {
+  private[this] def generateSubfieldTypes(fields: List[tree.Field]): Result[List[Stat]] = {
+    fields.foldMapM[Result, List[Stat]] {
       case compositeField: tree.CompositeField =>
         generateCompositeField(compositeField)
 
       case _: tree.SimpleField =>
-        List.empty
+        Right(List.empty)
     }
   }
 
-  private[this] def generateCompositeField(
+  def printFields(fields: tree.Fields, indentation: Int): Unit = {
+    fields.foreach {
+      case (container, fieldsByContainer) =>
+        fieldsByContainer.foreach { field =>
+          print(" " * indentation)
+          print(container.name)
+          print(": ")
+
+          field match {
+            case tree.CompositeField(name, subfields, _) =>
+              println(name)
+              printFields(subfields, indentation + 2)
+
+            case tree.SimpleField(name, tpe) =>
+              print(name)
+              print(" -> ")
+              println(tpe.namedType.name)
+          }
+        }
+    }
+  }
+
+  private[this] def generateCompositeField( // scalastyle:ignore method.length
     compositeField: tree.CompositeField,
     customFieldName: Option[String] = None
-  ): List[Stat] = {
+  ): Result[List[Stat]] = {
     val tpe = compositeField.tpe
-    val baseFields = compositeField.fields.getOrElse(tpe, Vector.empty).toList
-    val specificFields = compositeField.fields.filterKeys(_ != tpe)
+    val fields = compositeField.fields
 
-    val fieldName = customFieldName.getOrElse(compositeField.name)
-    val className = fieldName.capitalize
-    val typeName = Type.Name(className)
+    val baseFields = fields.getOrElse(tpe, Vector.empty).toList
 
-    val clazz = if (specificFields.isEmpty) {
-      q"""
-        final case class $typeName(
+    for {
+      subfieldTypes <- generateSubfieldTypes(baseFields)
+
+      specificFields <- fields
+        .filterKeys(_ != tpe)
+        .toList
+        .foldMapM[Result, tree.Fields] {
+          case (typeCondition, subfields) =>
+            // Make sure projection classes have all fields from the base class
+            transformer.mergeFields(subfields ++ baseFields.toVector).map { subfields =>
+              Map(typeCondition -> subfields)
+            }
+        }
+
+      specificSubfieldTypes <- specificFields.toList.foldMapM[Result, List[Stat]] {
+        case (typeCondition, subfields) =>
+          generateCompositeField(
+            tree.CompositeField(typeCondition.name, Map(typeCondition -> subfields), typeCondition)
+          )
+      }
+    } yield {
+      val fieldName = customFieldName.getOrElse(compositeField.name)
+      val className = fieldName.capitalize
+      val classStats = specificFields.toList.map {
+        case (typeCondition, _) =>
+          val termName = Term.Name(s"as${typeCondition.name}")
+          val typeName = Type.Name(s"$className.${typeCondition.name}")
+          q"def $termName: Option[$typeName] = ???"
+      }
+
+      val clazz = q"""
+        final case class ${Type.Name(className)} (
           ..${generateSubfieldParams(baseFields, className)}
-        )
-      """
-    } else {
-      q"""
-        sealed abstract class $typeName extends Product with Serializable {
-          ..${generateSubfieldMethods(baseFields, className)}
+        ) {
+          ..$classStats
         }
       """
-    }
 
-    List(
-      clazz,
-      q"""
-        object ${Term.Name(className)} {
-          ..${generateSubfieldTypes(baseFields)}
+      val companion = Some(subfieldTypes ++ specificSubfieldTypes)
+        .filter(_.nonEmpty)
+        .map { stats =>
+          q"""
+            object ${Term.Name(className)} {
+              ..$stats
+            }
+          """
         }
-      """
-    )
+
+      List(clazz) ++ companion.toList
+    }
   }
 
   def generate(operation: tree.Operation): Result[Defn.Object] = {
@@ -126,12 +178,12 @@ final class Generator(sourceFile: Option[File]) {
             )
           )
       }
-    } yield {
-      val termName = Term.Name(s"${operation.name}$suffix")
 
+      stats <- generateCompositeField(operation.underlying, Some("data"))
+    } yield {
       q"""
-        object $termName {
-          ..${generateCompositeField(operation.underlying, Some("data"))}
+        object ${Term.Name(s"${operation.name}$suffix")} {
+          ..$stats
         }
       """
     }

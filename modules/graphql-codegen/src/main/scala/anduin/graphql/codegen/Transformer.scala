@@ -63,7 +63,7 @@ private[codegen] final class Transformer(
     firstField.name == secondField.name && firstField.tpe == secondField.tpe
   }
 
-  private[this] def mergeFields(fields: Vector[tree.Field]): Result[Vector[tree.Field]] = {
+  private[codegen] def mergeFields(fields: Vector[tree.Field]): Result[Vector[tree.Field]] = {
     fields
       .groupBy(_.name)
       .values
