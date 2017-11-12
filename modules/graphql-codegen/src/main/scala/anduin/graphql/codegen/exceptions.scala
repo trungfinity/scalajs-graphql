@@ -123,3 +123,12 @@ final case class ConflictedFieldsException(
   def position: Option[Position] = None
   def details: String = s"Cannot merge 2 conflicted fields $firstField and $secondField."
 }
+
+final case class OperationTypeNotSupportedException(
+  operationType: ast.OperationType,
+  name: String,
+  override val sourceFile: Option[File]
+) extends CodegenSystemException {
+  def position: Option[Position] = None
+  def details: String = s"""Operation "$name" has unsupported type $operationType."""
+}

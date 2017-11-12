@@ -210,6 +210,20 @@ object Test extends App {
         |    }
         |  }
         |}
+        |
+        |query union3 {
+        |  union {
+        |    ... on a1 {
+        |      one
+        |    }
+        |    ... on a2 {
+        |      two
+        |    }
+        |    ... on a3 {
+        |      one
+        |    }
+        |  }
+        |}
     """.stripMargin
     )
     .get
@@ -249,27 +263,29 @@ object Test extends App {
   val sourceFile = Option.empty[File]
   val parser = new Parser(schema, document, sourceFile)
   val transformer = new Transformer(schema, document, sourceFile)
-  val generator = new Generator(schema, document, sourceFile)
+  val generator = new Generator(sourceFile)
 
   document.operations.values.toVector.foldMapM[Result, Vector[String]] { astOperation =>
     for {
       operation <- parser.parse(astOperation)
       transformedOperation <- transformer.transform(operation)
+      generatedObject <- generator.generate(transformedOperation)
     } yield {
       /* println(operation.name)
       printFields(operation.underlying.fields, 2)
 
-      println()
+      println() */
 
       println(transformedOperation.name)
       printFields(transformedOperation.underlying.fields, 2)
 
       println()
-      println() */
 
-      val generatedSourceCode = generator.generate(transformedOperation).syntax
+      val generatedSourceCode = generatedObject.syntax
 
       println(generatedSourceCode)
+      println()
+      println()
 
       Vector(generatedSourceCode)
     }

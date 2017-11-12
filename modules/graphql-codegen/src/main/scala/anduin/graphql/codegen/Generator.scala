@@ -10,89 +10,130 @@ import sangria.{ast, schema => sc}
 import scala.meta._
 // scalastyle:on underscore.import
 
-final class Generator(
-  schema: sc.Schema[_, _],
-  document: ast.Document,
-  sourceFile: Option[File]
-) {
+// scalastyle:off multiple.string.literals
 
-  private[this] val typeQuery = new TypeQuery(schema, document, sourceFile)
+final class Generator(sourceFile: Option[File]) {
 
-  private[this] def termParam(name: String, tpe: Type): Term.Param = {
-    Term.Param(List.empty, Term.Name(name), Some(tpe), None)
-  }
+  private[this] def generateFieldType(field: tree.Field, parentClassName: String): Type = {
+    val innermostType = field match {
+      case _: tree.CompositeField =>
+        Type.Name(s"$parentClassName.${field.name.capitalize}")
 
-  def generateFieldType(field: tree.Field)(genType: sc.Type => Type): Type = {
-    def typeOf(tpe: sc.Type): Type = tpe match {
-      case sc.OptionType(wrapped) =>
-        t"Option[${typeOf(wrapped)}]"
-      case sc.OptionInputType(wrapped) =>
-        t"Option[${typeOf(wrapped)}]"
-      case sc.ListType(wrapped) =>
-        t"List[${typeOf(wrapped)}]"
-      case sc.ListInputType(wrapped) =>
-        t"List[${typeOf(wrapped)}]"
-      case tpe: sc.ScalarType[_] if tpe == sc.IDType =>
-        Type.Name("ID")
-      case tpe: sc.Type =>
-        genType(tpe)
+      case _: tree.SimpleField =>
+        Type.Name(field.tpe.namedType.name)
     }
+
+    def typeOf(tpe: sc.Type): Type = {
+      tpe match {
+        case sc.OptionType(innerTpe) => t"Option[${typeOf(innerTpe)}]"
+        case sc.OptionInputType(innerTpe) => t"Option[${typeOf(innerTpe)}]"
+
+        case sc.ListType(innerTpe) => t"List[${typeOf(innerTpe)}]"
+        case sc.ListInputType(innerTpe) => t"List[${typeOf(innerTpe)}]"
+
+        case sc.IDType => Type.Name("ID")
+
+        case _ => innermostType
+      }
+    }
+
     typeOf(field.tpe)
   }
 
-  private[this] def fieldType(field: tree.Field, prefix: String = ""): Type = {
-    generateFieldType(field) { tpe =>
-      field match {
-        case _: tree.CompositeField =>
-          Type.Name(prefix + "." + field.name.capitalize)
-
-        case _: tree.SimpleField =>
-          Type.Name(tpe.namedType.name)
-      }
-    }
-  }
-
-  private[this] def generateFieldParams(
-    fields: Vector[tree.Field],
-    prefix: String
+  private[this] def generateSubfieldParams(
+    fields: List[tree.Field],
+    parentFieldName: String
   ): List[Term.Param] = {
-    fields.toList.map { field =>
-      val tpe = fieldType(field, prefix)
-      termParam(field.name, tpe)
+    fields.map { field =>
+      val termName = Term.Name(field.name)
+      val tpe = generateFieldType(field, parentFieldName)
+      param"$termName: $tpe"
     }
   }
 
-  private[this] def generateFieldStats(fields: Vector[tree.Field]): List[Stat] = {
-    fields.toList.flatMap {
-      case field: tree.CompositeField =>
-        val fields = field.fields(field.tpe)
+  private[this] def generateSubfieldMethods(
+    fields: List[tree.Field],
+    parentFieldName: String
+  ): List[Decl.Def] = {
+    fields.map { field =>
+      val termName = Term.Name(field.name)
+      val tpe = generateFieldType(field, parentFieldName)
+      q"def $termName: $tpe"
+    }
+  }
 
-        List(
-          q"""
-            final case class ${Type.Name(field.name.capitalize)}(
-              ..${generateFieldParams(fields, field.name)}
-            )
-          """,
-          q"""
-            object ${Term.Name(field.name.capitalize)} {
-              ..${generateFieldStats(fields)}
-            }
-          """
-        )
+  private[this] def generateSubfieldTypes(fields: List[tree.Field]): List[Stat] = {
+    fields.flatMap {
+      case compositeField: tree.CompositeField =>
+        generateCompositeField(compositeField)
 
       case _: tree.SimpleField =>
         List.empty
     }
   }
 
-  def generate(operation: tree.Operation): Defn.Object = {
-    val fields = operation.underlying.fields(operation.underlying.tpe)
+  private[this] def generateCompositeField(
+    compositeField: tree.CompositeField,
+    customFieldName: Option[String] = None
+  ): List[Stat] = {
+    val tpe = compositeField.tpe
+    val baseFields = compositeField.fields.getOrElse(tpe, Vector.empty).toList
+    val specificFields = compositeField.fields.filterKeys(_ != tpe)
 
-    q"""
-      object ${Term.Name(s"${operation.name}Query")} {
-        final case class Data(..${generateFieldParams(fields, "Data")})
-        object Data { ..${generateFieldStats(fields)} }
+    val fieldName = customFieldName.getOrElse(compositeField.name)
+    val className = fieldName.capitalize
+    val typeName = Type.Name(className)
+
+    val clazz = if (specificFields.isEmpty) {
+      q"""
+        final case class $typeName(
+          ..${generateSubfieldParams(baseFields, className)}
+        )
+      """
+    } else {
+      q"""
+        sealed abstract class $typeName extends Product with Serializable {
+          ..${generateSubfieldMethods(baseFields, className)}
+        }
+      """
+    }
+
+    List(
+      clazz,
+      q"""
+        object ${Term.Name(className)} {
+          ..${generateSubfieldTypes(baseFields)}
+        }
+      """
+    )
+  }
+
+  def generate(operation: tree.Operation): Result[Defn.Object] = {
+    for {
+      suffix <- operation.operationType match {
+        case ast.OperationType.Query =>
+          Right("Query")
+
+        case ast.OperationType.Mutation =>
+          Right("Mutation")
+
+        case ast.OperationType.Subscription =>
+          Left(
+            OperationTypeNotSupportedException(
+              operation.operationType,
+              operation.name,
+              sourceFile
+            )
+          )
       }
-    """
+    } yield {
+      val termName = Term.Name(s"${operation.name}$suffix")
+
+      q"""
+        object $termName {
+          ..${generateCompositeField(operation.underlying, Some("data"))}
+        }
+      """
+    }
   }
 }
