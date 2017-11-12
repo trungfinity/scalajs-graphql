@@ -34,14 +34,14 @@ private[codegen] final class Parser(
             compositeType <- typeInfo.currentCompositeType
             subfields <- parseSelections(astField.selections, compositeType)
           } yield {
-            tree.CompositeField(compositeType.name, subfields, compositeType)
+            tree.CompositeField(astField.name, subfields, compositeType)
           }
 
         case objectType: ObjectType[_, _] =>
           for {
             subfields <- parseSelections(astField.selections, objectType)
           } yield {
-            tree.CompositeField(objectType.name, subfields, objectType)
+            tree.CompositeField(astField.name, subfields, objectType)
           }
 
         case _ =>
@@ -105,9 +105,7 @@ private[codegen] final class Parser(
     selections.foldMapM(parseSelection(_, conditionType))
   }
 
-  private[this] def parseOperation(
-    astOperation: ast.OperationDefinition
-  ): Result[tree.Operation] = {
+  def parse(astOperation: ast.OperationDefinition): Result[tree.Operation] = {
     for {
       operationName <- astOperation.name.toRight {
         OperationNotNamedException(astOperation, sourceFile)
@@ -126,11 +124,5 @@ private[codegen] final class Parser(
         }
       }
     } yield operation
-  }
-
-  def parse(): Result[Vector[tree.Operation]] = {
-    document.operations.values.toVector.foldMapM[Result, Vector[tree.Operation]] {
-      parseOperation(_).map(Vector(_))
-    }
   }
 }

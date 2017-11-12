@@ -8,6 +8,8 @@ import sangria.parser.QueryParser
 import sangria.validation.QueryValidator
 
 // scalastyle:off underscore.import
+import scala.meta.prettyprinters._
+
 import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
@@ -247,25 +249,29 @@ object Test extends App {
   val sourceFile = Option.empty[File]
   val parser = new Parser(schema, document, sourceFile)
   val transformer = new Transformer(schema, document, sourceFile)
+  val generator = new Generator(schema, document, sourceFile)
 
-  for {
-    operations <- parser.parse()
-    transformedOperations <- operations.foldMapM[Result, Vector[tree.Operation]] { operation =>
-      transformer.transform(operation).map(Vector(_))
-    }
-  } yield {
-    operations.zip(transformedOperations).foreach {
-      case (operation, transformedOperation) =>
-        println(operation.name)
-        printFields(operation.underlying.fields, 2)
+  document.operations.values.toVector.foldMapM[Result, Vector[String]] { astOperation =>
+    for {
+      operation <- parser.parse(astOperation)
+      transformedOperation <- transformer.transform(operation)
+    } yield {
+      /* println(operation.name)
+      printFields(operation.underlying.fields, 2)
 
-        println()
+      println()
 
-        println(transformedOperation.name)
-        printFields(transformedOperation.underlying.fields, 2)
+      println(transformedOperation.name)
+      printFields(transformedOperation.underlying.fields, 2)
 
-        println()
-        println()
+      println()
+      println() */
+
+      val generatedSourceCode = generator.generate(transformedOperation).syntax
+
+      println(generatedSourceCode)
+
+      Vector(generatedSourceCode)
     }
   }
 }

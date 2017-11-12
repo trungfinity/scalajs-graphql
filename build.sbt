@@ -107,7 +107,8 @@ lazy val `graphql-codegen` = project
   .settings(
     libraryDependencies ++= Seq(
       "org.typelevel" %% "cats-core" % "1.0.0-RC1",
-      "org.sangria-graphql" %% "sangria" % "1.3.2"
+      "org.sangria-graphql" %% "sangria" % "1.3.2",
+      "org.scalameta" %% "scalameta" % "2.1.2"
     ),
     scalacOptions ++= Seq(
       "-Ypartial-unification"

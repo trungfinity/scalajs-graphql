@@ -18,6 +18,7 @@ private[codegen] object tree {
 
   sealed abstract class Field extends Tree {
     def name: String
+    def tpe: schema.Type
   }
 
   final case class CompositeField(
