@@ -2,6 +2,8 @@
 
 package anduin.graphql.codegen
 
+import java.io.File
+
 import sangria.ast
 
 // scalastyle:off underscore.import
@@ -9,14 +11,18 @@ import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
 
-private[codegen] final class Processor(schema: Schema[_, _], document: ast.Document) {
+private[codegen] final class Parser(
+  schema: Schema[_, _],
+  document: ast.Document,
+  sourceFile: Option[File]
+) {
 
-  private[this] val typeInfo = new TypeInfo(schema)
-  private[this] val typeQuery = new TypeQuery(schema, document)
+  private[this] val typeInfo = new TypeInfo(schema, sourceFile)
+  private[this] val typeQuery = new TypeQuery(schema, document, sourceFile)
 
-  private[this] def processField(
+  private[this] def parseField(
     astField: ast.Field,
-    container: CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     for {
       tpe <- typeInfo.currentType
@@ -26,27 +32,27 @@ private[codegen] final class Processor(schema: Schema[_, _], document: ast.Docum
         case _: AbstractType =>
           for {
             compositeType <- typeInfo.currentCompositeType
-            subfields <- processSelections(astField.selections, compositeType)
+            subfields <- parseSelections(astField.selections, compositeType)
           } yield {
-            tree.CompositeField(compositeType.name, subfields)
+            tree.CompositeField(compositeType.name, subfields, compositeType)
           }
 
         case objectType: ObjectType[_, _] =>
           for {
-            subfields <- processSelections(astField.selections, objectType)
+            subfields <- parseSelections(astField.selections, objectType)
           } yield {
-            tree.CompositeField(objectType.name, subfields)
+            tree.CompositeField(objectType.name, subfields, objectType)
           }
 
         case _ =>
           Right(tree.SimpleField(astField.name, tpe))
       }
     } yield {
-      Map(container -> Vector(field))
+      Map(conditionType -> Vector(field))
     }
   }
 
-  private[this] def processFragmentSpread(
+  private[this] def parseFragmentSpread(
     fragmentSpread: ast.FragmentSpread
   ): Result[tree.Fields] = {
     for {
@@ -54,65 +60,68 @@ private[codegen] final class Processor(schema: Schema[_, _], document: ast.Docum
       fields <- typeInfo.scope(fragment) {
         for {
           conditionType <- typeQuery.findCompositeType(fragment, fragment.typeCondition.name)
-          fields <- processSelections(fragment.selections, conditionType)
+          fields <- parseSelections(fragment.selections, conditionType)
         } yield fields
       }
     } yield fields
   }
 
-  private[this] def processInlineFragment(
+  private[this] def parseInlineFragment(
     inlineFragment: ast.InlineFragment,
-    container: CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     for {
-      conditionType <- inlineFragment.typeCondition match {
+      nextConditionType <- inlineFragment.typeCondition match {
         case Some(typeCondition) => typeQuery.findCompositeType(inlineFragment, typeCondition.name)
-        case None => Right(container)
+        case None => Right(conditionType)
       }
 
-      fields <- processSelections(inlineFragment.selections, conditionType)
+      fields <- parseSelections(inlineFragment.selections, nextConditionType)
     } yield fields
   }
 
-  private[this] def processSelection(
+  private[this] def parseSelection(
     selection: ast.Selection,
-    container: CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     typeInfo.scope(selection) {
       selection match {
         case astField: ast.Field =>
-          processField(astField, container)
+          parseField(astField, conditionType)
 
         case fragmentSpread: ast.FragmentSpread =>
-          processFragmentSpread(fragmentSpread)
+          parseFragmentSpread(fragmentSpread)
 
         case inlineFragment: ast.InlineFragment =>
-          processInlineFragment(inlineFragment, container)
+          parseInlineFragment(inlineFragment, conditionType)
       }
     }
   }
 
-  private[this] def processSelections(
+  private[this] def parseSelections(
     selections: Vector[ast.Selection],
-    container: CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
-    selections.foldMapM(processSelection(_, container))
+    selections.foldMapM(parseSelection(_, conditionType))
   }
 
-  private[this] def processOperation(
+  private[this] def parseOperation(
     astOperation: ast.OperationDefinition
   ): Result[tree.Operation] = {
     for {
-      operationName <- astOperation.name.toRight(OperationNotNamedException(astOperation))
+      operationName <- astOperation.name.toRight {
+        OperationNotNamedException(astOperation, sourceFile)
+      }
+
       operation <- typeInfo.scope(astOperation) {
         for {
           objectType <- typeInfo.currentObjectType
-          fields <- processSelections(astOperation.selections, objectType)
+          fields <- parseSelections(astOperation.selections, objectType)
         } yield {
           tree.Operation(
             operationName,
             astOperation.operationType,
-            tree.CompositeField(objectType.name, fields)
+            tree.CompositeField(objectType.name, fields, objectType)
           )
         }
       }
@@ -121,7 +130,7 @@ private[codegen] final class Processor(schema: Schema[_, _], document: ast.Docum
 
   def parse(): Result[Vector[tree.Operation]] = {
     document.operations.values.toVector.foldMapM[Result, Vector[tree.Operation]] {
-      processOperation(_).map(Vector(_))
+      parseOperation(_).map(Vector(_))
     }
   }
 }

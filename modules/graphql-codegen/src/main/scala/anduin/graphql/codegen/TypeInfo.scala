@@ -2,6 +2,8 @@
 
 package anduin.graphql.codegen
 
+import java.io.File
+
 import scala.util.Try
 
 import sangria.ast
@@ -11,7 +13,10 @@ import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
 
-private[codegen] final class TypeInfo(schema: Schema[_, _]) {
+private[codegen] final class TypeInfo(
+  schema: Schema[_, _],
+  sourceFile: Option[File]
+) {
 
   private[this] val typeInfo = new sangria.validation.TypeInfo(schema)
 
@@ -26,13 +31,13 @@ private[codegen] final class TypeInfo(schema: Schema[_, _]) {
   }
 
   def currentNode: Result[ast.AstNode] = {
-    typeInfo.ancestors.lastOption.toRight(EmptyNodeStackException)
+    typeInfo.ancestors.lastOption.toRight(EmptyNodeStackException(sourceFile))
   }
 
   def currentType: Result[Type] = {
     for {
       node <- currentNode
-      tpe <- typeInfo.tpe.toRight(TypeNotAvailableException(node))
+      tpe <- typeInfo.tpe.toRight(TypeNotAvailableException(node, sourceFile))
     } yield tpe
   }
 
@@ -41,7 +46,7 @@ private[codegen] final class TypeInfo(schema: Schema[_, _]) {
       node <- currentNode
       tpe <- currentType
       namedType <- Try(tpe.namedType).toEither.left.map {
-        NamedTypeNotAvailableException(node, tpe, _)
+        NamedTypeNotAvailableException(node, tpe, _, sourceFile)
       }
     } yield namedType
   }
@@ -58,7 +63,7 @@ private[codegen] final class TypeInfo(schema: Schema[_, _]) {
     specificCurrentType { (node, tpe) =>
       tpe match {
         case compositeType: CompositeType[_] => Right(compositeType)
-        case _ => Left(UnexpectedTypeException(node, tpe, classOf[CompositeType[_]]))
+        case _ => Left(UnexpectedTypeException(node, tpe, classOf[CompositeType[_]], sourceFile))
       }
     }
   }
@@ -67,7 +72,7 @@ private[codegen] final class TypeInfo(schema: Schema[_, _]) {
     specificCurrentType { (node, tpe) =>
       tpe match {
         case objectType: ObjectType[_, _] => Right(objectType)
-        case _ => Left(UnexpectedTypeException(node, tpe, classOf[ObjectType[_, _]]))
+        case _ => Left(UnexpectedTypeException(node, tpe, classOf[ObjectType[_, _]], sourceFile))
       }
     }
   }

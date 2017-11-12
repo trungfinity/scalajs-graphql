@@ -108,7 +108,7 @@
   <check enabled="true" class="org.scalastyle.scalariform.MultipleStringLiteralsChecker" level="error">
     <parameters>
       <parameter name="allowed"><![CDATA[2]]></parameter>
-      <parameter name="ignoreRegex"><![CDATA[^[."]?"$]]></parameter>
+      <parameter name="ignoreRegex"><![CDATA[^([."]?"|("|.|".)""")$]]></parameter>
     </parameters>
   </check>
   <check enabled="true" class="org.scalastyle.scalariform.NoCloneChecker" level="error" />
