@@ -2,10 +2,13 @@
 
 package anduin.graphql.codegen
 
+import java.io.File
+
 import sangria.parser.QueryParser
 import sangria.validation.QueryValidator
 
 // scalastyle:off underscore.import
+import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
 
@@ -241,11 +244,28 @@ object Test extends App {
     }
   }
 
-  new Parser(schema, document, sourceFile = None)
-    .parse()
-    .getOrElse(throw new RuntimeException("This should not happen."))
-    .foreach { operation =>
-      println(operation.name)
-      printFields(operation.underlying.fields, 2)
+  val sourceFile = Option.empty[File]
+  val parser = new Parser(schema, document, sourceFile)
+  val transformer = new Transformer(schema, document, sourceFile)
+
+  for {
+    operations <- parser.parse()
+    transformedOperations <- operations.foldMapM[Result, Vector[tree.Operation]] { operation =>
+      transformer.transform(operation).map(Vector(_))
     }
+  } yield {
+    operations.zip(transformedOperations).foreach {
+      case (operation, transformedOperation) =>
+        println(operation.name)
+        printFields(operation.underlying.fields, 2)
+
+        println()
+
+        println(transformedOperation.name)
+        printFields(transformedOperation.underlying.fields, 2)
+
+        println()
+        println()
+    }
+  }
 }

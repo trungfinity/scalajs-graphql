@@ -9,9 +9,7 @@ import sangria.{ast, schema}
 
 import anduin.exception.BaseException
 
-sealed abstract class CodegenException extends BaseException
-
-sealed abstract class ParserException extends CodegenException {
+sealed abstract class CodegenException extends BaseException {
 
   def sourceFile: Option[File]
 
@@ -22,19 +20,19 @@ sealed abstract class ParserException extends CodegenException {
   def details: String
 }
 
-sealed abstract class ParserUserException extends ParserException {
+sealed abstract class CodegenUserException extends CodegenException {
   final def message: String = s"[$lineString:$columnString] $details"
 }
 
 final case class OperationNotNamedException(
   operation: ast.OperationDefinition,
   override val sourceFile: Option[File]
-) extends ParserUserException {
+) extends CodegenUserException {
   def position: Option[Position] = operation.position
   def details: String = "Operation must be named."
 }
 
-sealed abstract class CodegenSystemException extends ParserException {
+sealed abstract class CodegenSystemException extends CodegenException {
 
   final def message: String = {
     s"[$lineString:$columnString] $details" +
@@ -107,4 +105,21 @@ final case class FragmentNotFoundException(
 ) extends CodegenSystemException {
   def position: Option[Position] = node.position
   def details: String = s"""Cannot find a fragment with name "$name"."""
+}
+
+final case class PossibleTypesUnavailableException(
+  tpe: schema.AbstractType,
+  override val sourceFile: Option[File]
+) extends CodegenSystemException {
+  def position: Option[Position] = None
+  def details: String = s"""Cannot find possible types for abstract type with name "${tpe.name}"."""
+}
+
+final case class ConflictedFieldsException(
+  firstField: tree.Field,
+  secondField: tree.Field,
+  override val sourceFile: Option[File]
+) extends CodegenSystemException {
+  def position: Option[Position] = None
+  def details: String = s"Cannot merge 2 conflicted fields $firstField and $secondField."
 }

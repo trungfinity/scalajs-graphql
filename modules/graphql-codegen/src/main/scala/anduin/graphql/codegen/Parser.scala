@@ -22,7 +22,7 @@ private[codegen] final class Parser(
 
   private[this] def parseField(
     astField: ast.Field,
-    container: CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     for {
       tpe <- typeInfo.currentType
@@ -48,7 +48,7 @@ private[codegen] final class Parser(
           Right(tree.SimpleField(astField.name, tpe))
       }
     } yield {
-      Map(container -> Vector(field))
+      Map(conditionType -> Vector(field))
     }
   }
 
@@ -68,41 +68,41 @@ private[codegen] final class Parser(
 
   private[this] def parseInlineFragment(
     inlineFragment: ast.InlineFragment,
-    container: CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     for {
-      conditionType <- inlineFragment.typeCondition match {
+      nextConditionType <- inlineFragment.typeCondition match {
         case Some(typeCondition) => typeQuery.findCompositeType(inlineFragment, typeCondition.name)
-        case None => Right(container)
+        case None => Right(conditionType)
       }
 
-      fields <- parseSelections(inlineFragment.selections, conditionType)
+      fields <- parseSelections(inlineFragment.selections, nextConditionType)
     } yield fields
   }
 
   private[this] def parseSelection(
     selection: ast.Selection,
-    container: CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     typeInfo.scope(selection) {
       selection match {
         case astField: ast.Field =>
-          parseField(astField, container)
+          parseField(astField, conditionType)
 
         case fragmentSpread: ast.FragmentSpread =>
           parseFragmentSpread(fragmentSpread)
 
         case inlineFragment: ast.InlineFragment =>
-          parseInlineFragment(inlineFragment, container)
+          parseInlineFragment(inlineFragment, conditionType)
       }
     }
   }
 
   private[this] def parseSelections(
     selections: Vector[ast.Selection],
-    container: CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
-    selections.foldMapM(parseSelection(_, container))
+    selections.foldMapM(parseSelection(_, conditionType))
   }
 
   private[this] def parseOperation(
