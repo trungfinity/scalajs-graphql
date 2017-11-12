@@ -11,7 +11,7 @@ import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
 
-final class Transformer(
+private[codegen] final class Transformer(
   schema: Schema[_, _],
   document: Document,
   sourceFile: Option[File]
