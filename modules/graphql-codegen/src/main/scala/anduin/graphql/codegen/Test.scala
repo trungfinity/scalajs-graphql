@@ -420,13 +420,13 @@ object Test extends App {
   }
 
   val sourceFile = Option.empty[File]
-  val parser = new Parser(schema, document, sourceFile)
-  val transformer = new Transformer(schema, document, sourceFile)
+  val parser = new DocumentParser(schema, document, sourceFile)
+  val transformer = new TreeTransformer(schema, document, sourceFile)
   val generator = new Generator(transformer, sourceFile)
 
   document.operations.values.toVector.foldMapM[Result, Vector[String]] { astOperation =>
     for {
-      operation <- parser.parse(astOperation)
+      operation <- parser.parseOperation(astOperation)
       transformedOperation <- transformer.transform(operation)
       generatedObject <- generator.generate(transformedOperation)
     } yield {

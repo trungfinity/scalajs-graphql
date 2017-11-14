@@ -4,39 +4,40 @@ package anduin.graphql.codegen
 
 import java.io.File
 
-import sangria.{ast, schema => sc}
+import sangria.ast
 
 // scalastyle:off underscore.import
 import cats.implicits._
+import sangria.schema._
 // scalastyle:on underscore.import
 
-private[codegen] final class Parser(
-  schema: sc.Schema[_, _],
+private[codegen] final class DocumentParser(
+  schema: Schema[_, _],
   document: ast.Document,
   sourceFile: Option[File]
 ) {
 
-  private[this] val typeInfo = new TypeInfo(schema, sourceFile)
-  private[this] val typeQuery = new TypeQuery(schema, document, sourceFile)
+  private[this] val traversal = new SchemaTraversal(schema, sourceFile)
+  private[this] val lookup = new SchemaLookup(schema, sourceFile)
 
   private[this] def parseField(
     astField: ast.Field,
-    conditionType: sc.CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     for {
-      tpe <- typeInfo.currentType
-      namedType <- typeInfo.currentNamedType
+      tpe <- traversal.currentType
+      namedType <- traversal.currentNamedType
 
       field <- namedType match {
-        case _: sc.AbstractType =>
+        case _: AbstractType =>
           for {
-            compositeType <- typeInfo.currentCompositeType
+            compositeType <- traversal.currentCompositeType
             subfields <- parseSelections(astField.selections, compositeType)
           } yield {
             tree.CompositeField(astField.name, subfields, compositeType)
           }
 
-        case objectType: sc.ObjectType[_, _] =>
+        case objectType: ObjectType[_, _] =>
           for {
             subfields <- parseSelections(astField.selections, objectType)
           } yield {
@@ -55,10 +56,13 @@ private[codegen] final class Parser(
     fragmentSpread: ast.FragmentSpread
   ): Result[tree.Fields] = {
     for {
-      fragment <- typeQuery.findFragment(fragmentSpread)
-      fields <- typeInfo.scope(fragment) {
+      fragment <- document.fragments
+        .get(fragmentSpread.name)
+        .toRight(FragmentNotFoundException(fragmentSpread, fragmentSpread.name, sourceFile))
+
+      fields <- traversal.scope(fragment) {
         for {
-          conditionType <- typeQuery.findCompositeType(fragment, fragment.typeCondition.name)
+          conditionType <- lookup.findCompositeType(fragment, fragment.typeCondition.name)
           fields <- parseSelections(fragment.selections, conditionType)
         } yield fields
       }
@@ -67,11 +71,12 @@ private[codegen] final class Parser(
 
   private[this] def parseInlineFragment(
     inlineFragment: ast.InlineFragment,
-    conditionType: sc.CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     for {
       nextConditionType <- inlineFragment.typeCondition match {
-        case Some(typeCondition) => typeQuery.findCompositeType(inlineFragment, typeCondition.name)
+        case Some(typeCondition) =>
+          lookup.findCompositeType(inlineFragment, typeCondition.name)
         case None => Right(conditionType)
       }
 
@@ -81,9 +86,9 @@ private[codegen] final class Parser(
 
   private[this] def parseSelection(
     selection: ast.Selection,
-    conditionType: sc.CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
-    typeInfo.scope(selection) {
+    traversal.scope(selection) {
       selection match {
         case astField: ast.Field =>
           parseField(astField, conditionType)
@@ -99,20 +104,22 @@ private[codegen] final class Parser(
 
   private[this] def parseSelections(
     selections: Vector[ast.Selection],
-    conditionType: sc.CompositeType[_]
+    conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     selections.foldMapM(parseSelection(_, conditionType))
   }
 
-  def parse(astOperation: ast.OperationDefinition): Result[tree.Operation] = {
+  private[this] def parseOperation(
+    astOperation: ast.OperationDefinition
+  ): Result[tree.Operation] = {
     for {
       operationName <- astOperation.name.toRight {
         OperationNotNamedException(astOperation, sourceFile)
       }
 
-      operation <- typeInfo.scope(astOperation) {
+      operation <- traversal.scope(astOperation) {
         for {
-          objectType <- typeInfo.currentObjectType
+          objectType <- traversal.currentObjectType
           fields <- parseSelections(astOperation.selections, objectType)
         } yield {
           tree.Operation(
@@ -123,5 +130,11 @@ private[codegen] final class Parser(
         }
       }
     } yield operation
+  }
+
+  def parse(): Result[Vector[tree.Operation]] = {
+    document.operations.values.toVector.foldMapM[Result, Vector[tree.Operation]] { operation =>
+      parseOperation(operation).map(Vector(_))
+    }
   }
 }

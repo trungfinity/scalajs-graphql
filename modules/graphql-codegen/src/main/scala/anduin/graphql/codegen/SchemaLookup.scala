@@ -6,17 +6,10 @@ import java.io.File
 
 import sangria.{ast, schema => sc}
 
-private[codegen] final class TypeQuery(
+private[codegen] final class SchemaLookup(
   schema: sc.Schema[_, _],
-  document: ast.Document,
   sourceFile: Option[File]
 ) {
-
-  def findFragment(fragmentSpread: ast.FragmentSpread): Result[ast.FragmentDefinition] = {
-    document.fragments
-      .get(fragmentSpread.name)
-      .toRight(FragmentNotFoundException(fragmentSpread, fragmentSpread.name, sourceFile))
-  }
 
   def findType(node: ast.AstNode, name: String): Result[sc.Type] = {
     schema.allTypes

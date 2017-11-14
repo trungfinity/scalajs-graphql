@@ -15,7 +15,7 @@ import cats.implicits._
 // scalastyle:off multiple.string.literals
 
 final class Generator(
-  transformer: Transformer,
+  transformer: TreeTransformer,
   sourceFile: Option[File]
 ) {
 
