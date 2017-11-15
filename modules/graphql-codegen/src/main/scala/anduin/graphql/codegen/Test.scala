@@ -8,6 +8,7 @@ import scala.concurrent.Future
 
 import sangria.execution.deferred.{Fetcher, HasId}
 import sangria.parser.QueryParser
+import sangria.renderer.QueryRenderer
 import sangria.validation.QueryValidator
 
 // scalastyle:off underscore.import
@@ -423,8 +424,9 @@ object Test extends App {
   val schemaTraversal = new SchemaTraversal(schema, sourceFile)
   val schemaLookup = new SchemaLookup(schema, sourceFile)
   val documentParser = new DocumentParser(document, sourceFile, schemaTraversal, schemaLookup)
+  val documentTransformer = new DocumentTransformer(schema)
   val fieldTransformer = new FieldTransformer(sourceFile, schemaLookup)
-  val generator = new Generator(sourceFile, schemaLookup, fieldTransformer)
+  val generator = new Generator(sourceFile, schemaLookup, documentTransformer, fieldTransformer)
 
   for {
     operations <- documentParser.parse()

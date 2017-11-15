@@ -5,6 +5,7 @@ package anduin.graphql.codegen
 import java.io.File
 
 import sangria.{ast, schema => sc}
+import sangria.introspection.TypeNameMetaField
 
 // scalastyle:off underscore.import
 import scala.meta._
@@ -17,6 +18,7 @@ import cats.implicits._
 final class Generator(
   sourceFile: Option[File],
   schemaLookup: SchemaLookup,
+  documentTransformer: DocumentTransformer,
   fieldTransformer: FieldTransformer
 ) {
 
@@ -107,7 +109,15 @@ final class Generator(
     val tpe = compositeField.tpe
     val fields = compositeField.fields
 
-    val baseFields = fields.getOrElse(tpe, Vector.empty).toList
+    val baseFields0 = fields.getOrElse(tpe, Vector.empty).toList
+    val specificFields0 = fields.filterKeys(_ != tpe)
+    val baseFields1 = if (specificFields0.nonEmpty) {
+      baseFields0 :+ tree.SimpleField(TypeNameMetaField.name, sc.StringType)
+    } else {
+      baseFields0
+    }
+
+    val baseFields = baseFields1.sortBy(_.name)
 
     for {
       subfieldTypes <- generateSubfieldTypes(baseFields)
@@ -135,13 +145,22 @@ final class Generator(
       val fieldName = customFieldName.getOrElse(compositeField.name)
       val className = fieldName.capitalize
       val classStats = specificFields.toList.map {
-        case (typeCondition, _) =>
-          val termName = Term.Name(s"as${typeCondition.name}")
-          val typeName = Type.Name(s"$className.${typeCondition.name}")
+        case (typeCondition, subfields) =>
+          val projectionName = typeCondition.name.capitalize
+          val projectionFullName = s"$className.$projectionName"
+          val projectionTermName = Term.Name(projectionFullName)
+
+          val subfieldParams = subfields.toList.map { field =>
+            Term.Name(field.name)
+          }
 
           q"""
-            def $termName: Option[$typeName] = {
-              ???
+            def ${Term.Name(s"as$projectionName")}: Option[${Type.Name(projectionFullName)}] = {
+              if ($projectionTermName.PossibleTypes.contains(__typename)) {
+                Some($projectionTermName(..$subfieldParams))
+              } else {
+                None
+              }
             }
           """
       }
@@ -158,18 +177,15 @@ final class Generator(
         Lit.String(possibleType.name)
       }
 
-      val companion = Some(subfieldTypes ++ specificSubfieldTypes)
-        .filter(_.nonEmpty)
-        .map { stats =>
-          q"""
-            object ${Term.Name(className)} {
-              val PossibleTypes: Set[String] = Set(..$possibleTypeLiterals)
-              ..$stats
-            }
-          """
+      val companionStats = subfieldTypes ++ specificSubfieldTypes
+      val companion = q"""
+        object ${Term.Name(className)} {
+          val PossibleTypes: Set[String] = Set(..$possibleTypeLiterals)
+          ..$companionStats
         }
+      """
 
-      List(clazz) ++ companion.toList
+      List(clazz, companion)
     }
   }
 
