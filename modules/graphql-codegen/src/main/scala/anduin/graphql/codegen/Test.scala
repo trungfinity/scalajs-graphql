@@ -6,9 +6,7 @@ import java.io.File
 
 import scala.concurrent.Future
 
-import sangria.execution.deferred.{Fetcher, HasId}
 import sangria.parser.QueryParser
-import sangria.renderer.QueryRenderer
 import sangria.validation.QueryValidator
 
 // scalastyle:off underscore.import
@@ -18,48 +16,39 @@ import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
 
-// scalastyle:off multiple.string.literals
+// scalastyle:off file.size.limit multiple.string.literals
 
 object Test extends App {
-
-  val characters = Fetcher.caching(
-    (ctx: CharacterRepo, ids: Seq[String]) =>
-      Future.successful(ids.flatMap(id => ctx.getHuman(id).orElse(ctx.getDroid(id))))
-  )(HasId(_.id))
 
   val EpisodeEnum = EnumType(
     "Episode",
     Some("One of the films in the Star Wars Trilogy"),
     List(
-      EnumValue("NEWHOPE", value = Episode.NEWHOPE, description = Some("Released in 1977.")),
-      EnumValue("EMPIRE", value = Episode.EMPIRE, description = Some("Released in 1980.")),
-      EnumValue("JEDI", value = Episode.JEDI, description = Some("Released in 1983."))
+      EnumValue("NEWHOPE", value = Episode.NEWHOPE),
+      EnumValue("EMPIRE", value = Episode.EMPIRE),
+      EnumValue("JEDI", value = Episode.JEDI)
     )
   )
 
-  val Character: InterfaceType[CharacterRepo, Character] =
+  val Character: InterfaceType[Unit, Character] =
     InterfaceType(
       "Character",
-      "A character in the Star Wars Trilogy",
       () =>
-        fields[CharacterRepo, Character](
-          Field("id", StringType, Some("The id of the character."), resolve = _.value.id),
+        fields[Unit, Character](
+          Field("id", StringType, resolve = _.value.id),
           Field(
             "name",
             OptionType(StringType),
-            Some("The name of the character."),
             resolve = _.value.name
           ),
           Field(
             "friends",
             ListType(Character),
-            Some("The friends of the character, or an empty list if they have none."),
-            resolve = ctx => characters.deferSeqOpt(ctx.value.friends)
+            resolve = _ => List.empty[Character]
           ),
           Field(
             "appearsIn",
             OptionType(ListType(OptionType(EpisodeEnum))),
-            Some("Which movies they appear in."),
             resolve = _.value.appearsIn.map(e => Some(e))
           )
       )
@@ -68,32 +57,27 @@ object Test extends App {
   val Human =
     ObjectType(
       "Human",
-      "A humanoid creature in the Star Wars universe.",
-      interfaces[CharacterRepo, Human](Character),
-      fields[CharacterRepo, Human](
-        Field("id", StringType, Some("The id of the human."), resolve = _.value.id),
+      interfaces[Unit, Human](Character),
+      fields[Unit, Human](
+        Field("id", StringType, resolve = _.value.id),
         Field(
           "name",
           OptionType(StringType),
-          Some("The name of the human."),
           resolve = _.value.name
         ),
         Field(
           "friends",
           ListType(Character),
-          Some("The friends of the human, or an empty list if they have none."),
-          resolve = ctx => characters.deferSeqOpt(ctx.value.friends)
+          resolve = _ => List.empty[Character]
         ),
         Field(
           "appearsIn",
           OptionType(ListType(OptionType(EpisodeEnum))),
-          Some("Which movies they appear in."),
           resolve = _.value.appearsIn.map(e => Some(e))
         ),
         Field(
           "homePlanet",
           OptionType(StringType),
-          Some("The home planet of the human, or null if unknown."),
           resolve = _.value.homePlanet
         )
       )
@@ -101,38 +85,32 @@ object Test extends App {
 
   val Droid = ObjectType(
     "Droid",
-    "A mechanical creature in the Star Wars universe.",
-    interfaces[CharacterRepo, Droid](Character),
-    fields[CharacterRepo, Droid](
+    interfaces[Unit, Droid](Character),
+    fields[Unit, Droid](
       Field(
         "id",
         StringType,
-        Some("The id of the droid."),
         tags = ProjectionName("_id") :: Nil,
         resolve = _.value.id
       ),
       Field(
         "name",
         OptionType(StringType),
-        Some("The name of the droid."),
         resolve = ctx => Future.successful(ctx.value.name)
       ),
       Field(
         "friends",
         ListType(Character),
-        Some("The friends of the droid, or an empty list if they have none."),
-        resolve = ctx => characters.deferSeqOpt(ctx.value.friends)
+        resolve = _ => List.empty[Character]
       ),
       Field(
         "appearsIn",
         OptionType(ListType(OptionType(EpisodeEnum))),
-        Some("Which movies they appear in."),
         resolve = _.value.appearsIn.map(e => Some(e))
       ),
       Field(
         "primaryFunction",
         OptionType(StringType),
-        Some("The primary function of the droid."),
         resolve = _.value.primaryFunction
       )
     )
@@ -140,12 +118,7 @@ object Test extends App {
 
   val ID = Argument("id", StringType, description = "id of the character")
 
-  val EpisodeArg = Argument(
-    "episode",
-    OptionInputType(EpisodeEnum),
-    description =
-      "If omitted, returns the hero of the whole saga. If provided, returns the hero of that particular episode."
-  )
+  val EpisodeArg = Argument("episode", OptionInputType(EpisodeEnum))
 
   private val StringArgument = Argument(
     name = "string",
@@ -195,9 +168,9 @@ object Test extends App {
     )
   )
 
-  private val query = ObjectType[CharacterRepo, Unit](
+  private val query = ObjectType[Unit, Unit](
     name = "Query",
-    fields = fields[CharacterRepo, Unit](
+    fields = fields[Unit, Unit](
       Field(
         name = "foo",
         fieldType = StringType,
@@ -265,19 +238,19 @@ object Test extends App {
         fieldType = Character,
         arguments = EpisodeArg :: Nil,
         deprecationReason = Some("Use `human` or `droid` fields instead"),
-        resolve = (ctx) => ctx.ctx.getHero(ctx.arg(EpisodeArg))
+        resolve = _ => ??? // scalastyle:ignore not.implemented.error.usage
       ),
       Field(
         name = "human",
         fieldType = OptionType(Human),
         arguments = ID :: Nil,
-        resolve = ctx => ctx.ctx.getHuman(ctx.arg(ID))
+        resolve = _ => ??? // scalastyle:ignore not.implemented.error.usage
       ),
       Field(
         "droid",
         Droid,
         arguments = ID :: Nil,
-        resolve = Projector((ctx, f) => ctx.ctx.getDroid(ctx.arg(ID)).get)
+        resolve = _ => ??? // scalastyle:ignore not.implemented.error.usage
       )
     )
   )
