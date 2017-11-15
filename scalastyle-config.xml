@@ -130,7 +130,7 @@
   </check>
   <check enabled="true" class="org.scalastyle.scalariform.ObjectNamesChecker" level="error">
     <parameters>
-      <parameter name="regex"><![CDATA[^[A-Za-z][A-Za-z0-9]+$]]></parameter>
+      <parameter name="regex"><![CDATA[^[A-Za-z][A-Za-z0-9]*$]]></parameter>
     </parameters>
   </check>
   <check enabled="true" class="org.scalastyle.scalariform.OverrideJavaChecker" level="error" />
