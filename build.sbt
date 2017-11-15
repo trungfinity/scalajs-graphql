@@ -6,7 +6,7 @@ lazy val `scalajs-io` = project
   .in(file("modules") / "io")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %%% "cats-effect" % "0.5"
+      Dependencies.CatsEffect.value
     )
   )
   .enablePlugins(ScalaJSPlugin)
@@ -15,9 +15,9 @@ lazy val `graphql-codegen` = project
   .in(file("modules") / "graphql-codegen")
   .settings(
     libraryDependencies ++= Seq(
-      "org.typelevel" %% "cats-core" % "1.0.0-RC1",
-      "org.sangria-graphql" %% "sangria" % "1.3.2",
-      "org.scalameta" %% "scalameta" % "2.1.2"
+      Dependencies.CatsCore.value,
+      Dependencies.Sangria.value,
+      Dependencies.Scalameta.value
     ),
     scalacOptions ++= Seq(
       "-Ypartial-unification"

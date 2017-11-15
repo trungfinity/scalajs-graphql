@@ -12,7 +12,7 @@ lazy val `scalajs-node-fetch` = project
   .dependsOn(`scalajs-fetch`)
   .settings(
     npmDependencies in Compile ++= Seq(
-      "node-fetch" -> "1.7.3"
+      NpmDependencies.NodeFetch
     )
   )
   .enablePlugins(ScalaJSBundlerPlugin)

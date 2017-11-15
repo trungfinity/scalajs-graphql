@@ -9,8 +9,8 @@ lazy val `scalajs-graphql-tools` = project
   .in(file("graphql-tools"))
   .settings(
     npmDependencies in Compile ++= Seq(
-      "graphql" -> "0.11.7",
-      "graphql-tools" -> "2.7.2"
+      NpmDependencies.Graphql,
+      NpmDependencies.GraphqlTools
     )
   )
   .enablePlugins(ScalaJSBundlerPlugin)
@@ -19,8 +19,8 @@ lazy val `scalajs-apollo-link` = project
   .in(file("apollo-link"))
   .settings(
     npmDependencies in Compile ++= Seq(
-      "apollo-link" -> "1.0.0",
-      "graphql" -> "0.11.7"
+      NpmDependencies.ApolloLink,
+      NpmDependencies.Graphql
     )
   )
   .enablePlugins(ScalaJSBundlerPlugin)
@@ -34,7 +34,7 @@ lazy val `scalajs-apollo-link-http` = project
   )
   .settings(
     npmDependencies in Compile ++= Seq(
-      "apollo-link-http" -> "1.1.0"
+      NpmDependencies.ApolloLinkHttp
     )
   )
   .enablePlugins(ScalaJSBundlerPlugin)
@@ -48,7 +48,7 @@ lazy val `scalajs-apollo-cache` = project
   .in(file("apollo-cache"))
   .settings(
     npmDependencies in Compile ++= Seq(
-      "apollo-cache" -> "1.0.0"
+      NpmDependencies.ApolloCache
     )
   )
   .enablePlugins(ScalaJSBundlerPlugin)
@@ -58,7 +58,7 @@ lazy val `scalajs-apollo-cache-inmemory` = project
   .dependsOn(`scalajs-apollo-cache`)
   .settings(
     npmDependencies in Compile ++= Seq(
-      "apollo-cache-inmemory" -> "1.0.0"
+      NpmDependencies.ApolloCacheInmemory
     )
   )
   .enablePlugins(ScalaJSBundlerPlugin)
@@ -74,7 +74,7 @@ lazy val `scalajs-apollo-client` = project
   )
   .settings(
     npmDependencies in Compile ++= Seq(
-      "apollo-client" -> "2.0.1"
+      NpmDependencies.ApolloClient
     )
   )
   .enablePlugins(ScalaJSBundlerPlugin)
@@ -89,16 +89,16 @@ lazy val `scalajs-react-apollo` = project
   )
   .settings(
     libraryDependencies ++= Seq(
-      compilerPlugin("org.scalamacros" % "paradise" % "2.1.1" cross CrossVersion.full),
-      "io.circe" %%% "circe-generic" % "0.9.0-M2",
-      "io.circe" %%% "circe-scalajs" % "0.9.0-M2",
-      "com.github.japgolly.scalajs-react" %%% "core" % "1.1.1"
+      compilerPlugin(Dependencies.ScalaMacrosParadise.value),
+      Dependencies.CirceGeneric.value,
+      Dependencies.CirceScalajs.value,
+      Dependencies.ScalajsReactCore.value
     ),
     npmDependencies in Compile ++= Seq(
-      "graphql-tag" -> "2.5.0",
-      "react" -> "15.6.2",
-      "react-apollo" -> "2.0.0",
-      "react-dom" -> "15.6.2"
+      NpmDependencies.GraphqlTag,
+      NpmDependencies.React,
+      NpmDependencies.ReactApollo,
+      NpmDependencies.ReactDom
     )
   )
   .enablePlugins(ScalaJSBundlerPlugin)
