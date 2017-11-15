@@ -1,10 +1,13 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin
+
+// scalastyle:off underscore.import
+import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
-import sbt.Keys._
 import sbt._
+import sbt.Keys._
+// scalastyle:on underscore.import
 
 object AnduinScalajsPlugin extends AutoPlugin {
 
