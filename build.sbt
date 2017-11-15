@@ -2,12 +2,6 @@
 
 // scalastyle:off multiple.string.literals
 
-inThisBuild(
-  Seq(
-    scalaVersion := "2.12.4"
-  )
-)
-
 lazy val `scalajs-io` = project
   .in(file("modules") / "io")
   .settings(
