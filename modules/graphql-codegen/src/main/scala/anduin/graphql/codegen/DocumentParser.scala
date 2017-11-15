@@ -12,26 +12,24 @@ import sangria.schema._
 // scalastyle:on underscore.import
 
 private[codegen] final class DocumentParser(
-  schema: Schema[_, _],
   document: ast.Document,
-  sourceFile: Option[File]
+  sourceFile: Option[File],
+  schemaTraversal: SchemaTraversal,
+  schemaLookup: SchemaLookup
 ) {
-
-  private[this] val traversal = new SchemaTraversal(schema, sourceFile)
-  private[this] val lookup = new SchemaLookup(schema, sourceFile)
 
   private[this] def parseField(
     astField: ast.Field,
     conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
     for {
-      tpe <- traversal.currentType
-      namedType <- traversal.currentNamedType
+      tpe <- schemaTraversal.currentType
+      namedType <- schemaTraversal.currentNamedType
 
       field <- namedType match {
         case _: AbstractType =>
           for {
-            compositeType <- traversal.currentCompositeType
+            compositeType <- schemaTraversal.currentCompositeType
             subfields <- parseSelections(astField.selections, compositeType)
           } yield {
             tree.CompositeField(astField.name, subfields, compositeType)
@@ -60,9 +58,9 @@ private[codegen] final class DocumentParser(
         .get(fragmentSpread.name)
         .toRight(FragmentNotFoundException(fragmentSpread, fragmentSpread.name, sourceFile))
 
-      fields <- traversal.scope(fragment) {
+      fields <- schemaTraversal.scope(fragment) {
         for {
-          conditionType <- lookup.findCompositeType(fragment, fragment.typeCondition.name)
+          conditionType <- schemaLookup.findCompositeType(fragment, fragment.typeCondition.name)
           fields <- parseSelections(fragment.selections, conditionType)
         } yield fields
       }
@@ -76,7 +74,7 @@ private[codegen] final class DocumentParser(
     for {
       nextConditionType <- inlineFragment.typeCondition match {
         case Some(typeCondition) =>
-          lookup.findCompositeType(inlineFragment, typeCondition.name)
+          schemaLookup.findCompositeType(inlineFragment, typeCondition.name)
         case None => Right(conditionType)
       }
 
@@ -88,7 +86,7 @@ private[codegen] final class DocumentParser(
     selection: ast.Selection,
     conditionType: CompositeType[_]
   ): Result[tree.Fields] = {
-    traversal.scope(selection) {
+    schemaTraversal.scope(selection) {
       selection match {
         case astField: ast.Field =>
           parseField(astField, conditionType)
@@ -117,9 +115,9 @@ private[codegen] final class DocumentParser(
         OperationNotNamedException(astOperation, sourceFile)
       }
 
-      operation <- traversal.scope(astOperation) {
+      operation <- schemaTraversal.scope(astOperation) {
         for {
-          objectType <- traversal.currentObjectType
+          objectType <- schemaTraversal.currentObjectType
           fields <- parseSelections(astOperation.selections, objectType)
         } yield {
           tree.Operation(

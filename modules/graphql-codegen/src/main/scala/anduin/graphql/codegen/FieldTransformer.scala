@@ -6,15 +6,12 @@ import java.io.File
 
 // scalastyle:off underscore.import
 import cats.implicits._
-import sangria.schema._
 // scalastyle:on underscore.import
 
-private[codegen] final class TreeTransformer(
-  schema: Schema[_, _],
-  sourceFile: Option[File]
+private[codegen] final class FieldTransformer(
+  sourceFile: Option[File],
+  schemaLookup: SchemaLookup
 ) {
-
-  private[this] val lookup = new SchemaLookup(schema, sourceFile)
 
   private[this] def mergeSameNameFields(fields: Vector[tree.Field]): Result[Vector[tree.Field]] = {
     fields.headOption match {
@@ -64,7 +61,7 @@ private[codegen] final class TreeTransformer(
 
   def transformField(field: tree.CompositeField): Result[tree.CompositeField] = {
     for {
-      possibleTypes <- lookup.findPossibleTypes(field.tpe)
+      possibleTypes <- schemaLookup.findPossibleTypes(field.tpe)
 
       // Flatten type conditions. Basically, there are 2 cases:
       // 1. If a type condition is super set of the current composite type,
@@ -74,7 +71,7 @@ private[codegen] final class TreeTransformer(
       transformedSubfields <- field.fields.toVector.foldMapM[Result, tree.Fields] {
         case (conditionType, subfields) =>
           for {
-            narrowedPossibleTypes <- lookup.narrowPossibleTypes(possibleTypes, conditionType)
+            narrowedPossibleTypes <- schemaLookup.narrowPossibleTypes(possibleTypes, conditionType)
           } yield {
             val targetConditionTypes = if (narrowedPossibleTypes.size >= possibleTypes.size) {
               // This is the first case explained above.

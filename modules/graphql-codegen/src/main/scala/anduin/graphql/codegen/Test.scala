@@ -420,33 +420,38 @@ object Test extends App {
   }
 
   val sourceFile = Option.empty[File]
-  val parser = new DocumentParser(schema, document, sourceFile)
-  val transformer = new TreeTransformer(schema, document, sourceFile)
-  val generator = new Generator(transformer, sourceFile)
+  val schemaTraversal = new SchemaTraversal(schema, sourceFile)
+  val schemaLookup = new SchemaLookup(schema, sourceFile)
+  val documentParser = new DocumentParser(document, sourceFile, schemaTraversal, schemaLookup)
+  val fieldTransformer = new FieldTransformer(sourceFile, schemaLookup)
+  val generator = new Generator(sourceFile, schemaLookup, fieldTransformer)
 
-  document.operations.values.toVector.foldMapM[Result, Vector[String]] { astOperation =>
-    for {
-      operation <- parser.parseOperation(astOperation)
-      transformedOperation <- transformer.transform(operation)
-      generatedObject <- generator.generate(transformedOperation)
-    } yield {
-      /* println(operation.name)
-      printFields(operation.underlying.fields, 2)
+  for {
+    operations <- documentParser.parse()
+    _ <- operations.foldMapM[Result, Vector[String]] { operation =>
+      for {
+        transformedField <- fieldTransformer.transformField(operation.underlying)
+        transformedOperation = operation.copy(underlying = transformedField)
+        generatedObject <- generator.generate(transformedOperation)
+      } yield {
+        /* println(operation.name)
+        printFields(operation.underlying.fields, 2)
 
-      println() */
+        println() */
 
-      println(transformedOperation.name)
-      printFields(transformedOperation.underlying.fields, 2)
+        println(transformedOperation.name)
+        printFields(transformedOperation.underlying.fields, 2)
 
-      println()
+        println()
 
-      val generatedSourceCode = generatedObject.syntax
+        val generatedSourceCode = generatedObject.syntax
 
-      println(generatedSourceCode)
-      println()
-      println()
+        println(generatedSourceCode)
+        println()
+        println()
 
-      Vector(generatedSourceCode)
+        Vector(generatedSourceCode)
+      }
     }
-  }
+  } yield ()
 }

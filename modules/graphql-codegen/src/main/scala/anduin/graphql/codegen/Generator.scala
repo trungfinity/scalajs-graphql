@@ -15,8 +15,9 @@ import cats.implicits._
 // scalastyle:off multiple.string.literals
 
 final class Generator(
-  transformer: TreeTransformer,
-  sourceFile: Option[File]
+  sourceFile: Option[File],
+  schemaLookup: SchemaLookup,
+  fieldTransformer: FieldTransformer
 ) {
 
   private[this] def generateFieldType(field: tree.Field, parentClassName: String): Type = {
@@ -117,7 +118,7 @@ final class Generator(
         .foldMapM[Result, tree.Fields] {
           case (typeCondition, subfields) =>
             // Make sure projection classes have all fields from the base class
-            transformer.mergeFields(subfields ++ baseFields.toVector).map { subfields =>
+            fieldTransformer.mergeFields(subfields ++ baseFields.toVector).map { subfields =>
               Map(typeCondition -> subfields)
             }
         }
@@ -128,6 +129,8 @@ final class Generator(
             tree.CompositeField(typeCondition.name, Map(typeCondition -> subfields), typeCondition)
           )
       }
+
+      possibleTypes <- schemaLookup.findPossibleTypes(compositeField.tpe)
     } yield {
       val fieldName = customFieldName.getOrElse(compositeField.name)
       val className = fieldName.capitalize
@@ -135,7 +138,12 @@ final class Generator(
         case (typeCondition, _) =>
           val termName = Term.Name(s"as${typeCondition.name}")
           val typeName = Type.Name(s"$className.${typeCondition.name}")
-          q"def $termName: Option[$typeName] = ???"
+
+          q"""
+            def $termName: Option[$typeName] = {
+              ???
+            }
+          """
       }
 
       val clazz = q"""
@@ -146,11 +154,16 @@ final class Generator(
         }
       """
 
+      val possibleTypeLiterals = possibleTypes.toList.map { possibleType =>
+        Lit.String(possibleType.name)
+      }
+
       val companion = Some(subfieldTypes ++ specificSubfieldTypes)
         .filter(_.nonEmpty)
         .map { stats =>
           q"""
             object ${Term.Name(className)} {
+              val PossibleTypes: Set[String] = Set(..$possibleTypeLiterals)
               ..$stats
             }
           """
