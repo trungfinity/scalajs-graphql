@@ -7,26 +7,26 @@ import java.io.File
 import scala.util.Try
 
 import sangria.ast
+import sangria.validation.TypeInfo
 
 // scalastyle:off underscore.import
 import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
 
-private[codegen] final class TypeInfo(
+private[codegen] final class SchemaTraversal(
   schema: Schema[_, _],
   sourceFile: Option[File]
 ) {
 
-  private[this] val typeInfo = new sangria.validation.TypeInfo(schema)
+  private[this] val typeInfo = new TypeInfo(schema)
 
   def scope[A](node: ast.AstNode)(action: => Result[A]): Result[A] = {
     for {
       _ <- Right(typeInfo.enter(node))
-      result <- action.onError {
-        case _ => Right(typeInfo.leave(node))
-      }
+      attempt <- action.attempt
       _ = typeInfo.leave(node)
+      result <- attempt
     } yield result
   }
 
@@ -51,7 +51,9 @@ private[codegen] final class TypeInfo(
     } yield namedType
   }
 
-  private[this] def specificCurrentType[A](filter: (ast.AstNode, Type) => Result[A]): Result[A] = {
+  private[this] def specificCurrentType[A](
+    filter: (ast.AstNode, Type) => Result[A]
+  ): Result[A] = {
     for {
       node <- currentNode
       tpe <- currentType

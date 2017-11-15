@@ -4,17 +4,121 @@ package anduin.graphql.codegen
 
 import java.io.File
 
+import scala.concurrent.Future
+
 import sangria.parser.QueryParser
 import sangria.validation.QueryValidator
 
 // scalastyle:off underscore.import
+import scala.meta.prettyprinters._
+
 import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
 
-// scalastyle:off multiple.string.literals
+// scalastyle:off file.size.limit multiple.string.literals
 
 object Test extends App {
+
+  val EpisodeEnum = EnumType(
+    "Episode",
+    Some("One of the films in the Star Wars Trilogy"),
+    List(
+      EnumValue("NEWHOPE", value = Episode.NEWHOPE),
+      EnumValue("EMPIRE", value = Episode.EMPIRE),
+      EnumValue("JEDI", value = Episode.JEDI)
+    )
+  )
+
+  val Character: InterfaceType[Unit, Character] =
+    InterfaceType(
+      "Character",
+      () =>
+        fields[Unit, Character](
+          Field("id", StringType, resolve = _.value.id),
+          Field(
+            "name",
+            OptionType(StringType),
+            resolve = _.value.name
+          ),
+          Field(
+            "friends",
+            ListType(Character),
+            resolve = _ => List.empty[Character]
+          ),
+          Field(
+            "appearsIn",
+            OptionType(ListType(OptionType(EpisodeEnum))),
+            resolve = _.value.appearsIn.map(e => Some(e))
+          )
+      )
+    )
+
+  val Human =
+    ObjectType(
+      "Human",
+      interfaces[Unit, Human](Character),
+      fields[Unit, Human](
+        Field("id", StringType, resolve = _.value.id),
+        Field(
+          "name",
+          OptionType(StringType),
+          resolve = _.value.name
+        ),
+        Field(
+          "friends",
+          ListType(Character),
+          resolve = _ => List.empty[Character]
+        ),
+        Field(
+          "appearsIn",
+          OptionType(ListType(OptionType(EpisodeEnum))),
+          resolve = _.value.appearsIn.map(e => Some(e))
+        ),
+        Field(
+          "homePlanet",
+          OptionType(StringType),
+          resolve = _.value.homePlanet
+        )
+      )
+    )
+
+  val Droid = ObjectType(
+    "Droid",
+    interfaces[Unit, Droid](Character),
+    fields[Unit, Droid](
+      Field(
+        "id",
+        StringType,
+        tags = ProjectionName("_id") :: Nil,
+        resolve = _.value.id
+      ),
+      Field(
+        "name",
+        OptionType(StringType),
+        resolve = ctx => Future.successful(ctx.value.name)
+      ),
+      Field(
+        "friends",
+        ListType(Character),
+        resolve = _ => List.empty[Character]
+      ),
+      Field(
+        "appearsIn",
+        OptionType(ListType(OptionType(EpisodeEnum))),
+        resolve = _.value.appearsIn.map(e => Some(e))
+      ),
+      Field(
+        "primaryFunction",
+        OptionType(StringType),
+        resolve = _.value.primaryFunction
+      )
+    )
+  )
+
+  val ID = Argument("id", StringType, description = "id of the character")
+
+  val EpisodeArg = Argument("episode", OptionInputType(EpisodeEnum))
 
   private val StringArgument = Argument(
     name = "string",
@@ -128,6 +232,25 @@ object Test extends App {
           types = List(a1)
         ),
         resolve = _ => ()
+      ),
+      Field(
+        name = "hero",
+        fieldType = Character,
+        arguments = EpisodeArg :: Nil,
+        deprecationReason = Some("Use `human` or `droid` fields instead"),
+        resolve = _ => ??? // scalastyle:ignore not.implemented.error.usage
+      ),
+      Field(
+        name = "human",
+        fieldType = OptionType(Human),
+        arguments = ID :: Nil,
+        resolve = _ => ??? // scalastyle:ignore not.implemented.error.usage
+      ),
+      Field(
+        "droid",
+        Droid,
+        arguments = ID :: Nil,
+        resolve = _ => ??? // scalastyle:ignore not.implemented.error.usage
       )
     )
   )
@@ -208,6 +331,32 @@ object Test extends App {
         |    }
         |  }
         |}
+        |
+        |query union3 {
+        |  union {
+        |    ... on a1 {
+        |      one
+        |    }
+        |    ... on a2 {
+        |      two
+        |    }
+        |    ... on a3 {
+        |      one
+        |    }
+        |  }
+        |}
+        |
+        |query Now {
+        |  hero {
+        |    id
+        |    ... on Human {
+        |      homePlanet
+        |    }
+        |    ... on Droid {
+        |      primaryFunction
+        |    }
+        |  }
+        |}
     """.stripMargin
     )
     .get
@@ -245,27 +394,39 @@ object Test extends App {
   }
 
   val sourceFile = Option.empty[File]
-  val parser = new Parser(schema, document, sourceFile)
-  val transformer = new Transformer(schema, document, sourceFile)
+  val schemaTraversal = new SchemaTraversal(schema, sourceFile)
+  val schemaLookup = new SchemaLookup(schema, sourceFile)
+  val documentParser = new DocumentParser(document, sourceFile, schemaTraversal, schemaLookup)
+  val documentTransformer = new DocumentTransformer(schema)
+  val fieldTransformer = new FieldTransformer(sourceFile, schemaLookup)
+  val generator = new Generator(sourceFile, schemaLookup, documentTransformer, fieldTransformer)
 
   for {
-    operations <- parser.parse()
-    transformedOperations <- operations.foldMapM[Result, Vector[tree.Operation]] { operation =>
-      transformer.transform(operation).map(Vector(_))
-    }
-  } yield {
-    operations.zip(transformedOperations).foreach {
-      case (operation, transformedOperation) =>
-        println(operation.name)
+    operations <- documentParser.parse()
+    _ <- operations.foldMapM[Result, Vector[String]] { operation =>
+      for {
+        transformedField <- fieldTransformer.transformField(operation.underlying)
+        transformedOperation = operation.copy(underlying = transformedField)
+        generatedObject <- generator.generate(transformedOperation)
+      } yield {
+        /* println(operation.name)
         printFields(operation.underlying.fields, 2)
 
-        println()
+        println() */
 
         println(transformedOperation.name)
         printFields(transformedOperation.underlying.fields, 2)
 
         println()
+
+        val generatedSourceCode = generatedObject.syntax
+
+        println(generatedSourceCode)
         println()
+        println()
+
+        Vector(generatedSourceCode)
+      }
     }
-  }
+  } yield ()
 }
