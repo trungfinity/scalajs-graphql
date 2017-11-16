@@ -136,12 +136,12 @@
   <check enabled="true" class="org.scalastyle.scalariform.OverrideJavaChecker" level="error" />
   <check enabled="true" class="org.scalastyle.scalariform.PackageNamesChecker" level="error">
     <parameters>
-      <parameter name="regex"><![CDATA[^[a-z]+$]]></parameter>
+      <parameter name="regex"><![CDATA[^[a-z][a-z0-9]*$]]></parameter>
     </parameters>
   </check>
   <check enabled="true" class="org.scalastyle.scalariform.PackageObjectNamesChecker" level="error">
     <parameters>
-      <parameter name="regex"><![CDATA[^[a-z][A-Za-z]*$]]></parameter>
+      <parameter name="regex"><![CDATA[^[a-z][a-z0-9]*$]]></parameter>
     </parameters>
   </check>
   <check enabled="true" class="org.scalastyle.scalariform.ParameterNumberChecker" level="error">
