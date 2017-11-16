@@ -33,15 +33,15 @@ private[codegen2] final class SchemaLookup(
   }
 
   def findPossibleTypes(
-    compositeType: CompositeType[_],
+    tpe: CompositeType[_],
     node: ast.AstNode
   )(
     implicit sourceFile: Option[SourceFile]
   ): Result[Set[ObjectType[_, _]]] = {
-    compositeType match {
+    tpe match {
       case abstractType: AbstractType =>
         schema.possibleTypes
-          .get(compositeType.name)
+          .get(tpe.name)
           .map(_.toSet)
           .toRight(PossibleTypesUnavailableException(abstractType, node))
 
