@@ -1,0 +1,6 @@
+query GetName {
+  name {
+    firstName
+    lastName
+  }
+}

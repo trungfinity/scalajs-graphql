@@ -4,6 +4,8 @@ package anduin.graphql.codegen
 
 import java.io.File
 
+import sangria.schema.CompositeType
+
 // scalastyle:off underscore.import
 import cats.implicits._
 // scalastyle:on underscore.import
@@ -73,12 +75,14 @@ private[codegen] final class FieldTransformer(
           for {
             narrowedPossibleTypes <- schemaLookup.narrowPossibleTypes(possibleTypes, conditionType)
           } yield {
-            val targetConditionTypes = if (narrowedPossibleTypes.size >= possibleTypes.size) {
-              // This is the first case explained above.
-              Set(field.tpe)
-            } else {
-              // This is the second one.
-              narrowedPossibleTypes
+            val targetConditionTypes: Set[CompositeType[_]] = {
+              if (narrowedPossibleTypes.size >= possibleTypes.size) {
+                // This is the first case explained above.
+                Set(field.tpe)
+              } else {
+                // This is the second one.
+                narrowedPossibleTypes.map(tpe => tpe: CompositeType[_])
+              }
             }
 
             targetConditionTypes.map(_ -> subfields).toMap
