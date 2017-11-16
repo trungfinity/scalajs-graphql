@@ -10,11 +10,13 @@ import sangria.schema._
 // scalastyle:on underscore.import
 
 private[codegen2] final class DocumentParser(
-  schemaTraversal: SchemaTraversal,
-  schemaLookup: SchemaLookup
+  schema: Schema[_, _]
 ) {
 
   import DocumentParser._ // scalastyle:ignore import.grouping underscore.import
+
+  private[this] val schemaTraversal = new SchemaTraversal(schema)
+  private[this] val schemaLookup = new SchemaLookup(schema)
 
   private[this] def parseField(
     astField: ast.Field,
@@ -38,11 +40,11 @@ private[codegen2] final class DocumentParser(
               SelectionScope(fieldCompositeType, fieldPossibleTypes)
             )
           } yield {
-            tree.CompositeField(astField.name, subfields, fieldCompositeType, fieldPossibleTypes)
+            tree.CompositeField(astField, subfields, fieldCompositeType)
           }
 
         case _ =>
-          Right(tree.SingleField(astField.name, fieldType))
+          Right(tree.SingleField(astField, fieldType))
       }
     } yield {
       if (possibleTypes >= scope.possibleTypes) {
@@ -139,7 +141,9 @@ private[codegen2] final class DocumentParser(
     implicit document: ast.Document,
     sourceFile: Option[SourceFile]
   ): Result[tree.Fields] = {
-    selections.foldMapM(parseSelection(_, possibleTypes, scope))
+    for {
+      fields <- selections.foldMapM(parseSelection(_, possibleTypes, scope))
+    } yield fields
   }
 
   private[this] def parseOperation(
@@ -163,10 +167,22 @@ private[codegen2] final class DocumentParser(
             SelectionScope(objectType, possibleTypes)
           )
         } yield {
+          // Create a dummy field node for this operation
+          val underlyingFieldNode = ast.Field(
+            alias = None,
+            name = "data",
+            arguments = Vector.empty,
+            directives = astOperation.directives,
+            selections = astOperation.selections,
+            comments = astOperation.comments,
+            trailingComments = astOperation.trailingComments,
+            position = astOperation.position
+          )
+
           tree.Operation(
             operationName,
             astOperation.operationType,
-            tree.CompositeField("data", subfields, objectType, possibleTypes)
+            tree.CompositeField(underlyingFieldNode, subfields, objectType)
           )
         }
       }

@@ -39,19 +39,11 @@ final class DocumentParser2Spec extends UnitSpec {
 
   it should "run successsfully" in {
     val reader = new DataSetReader("01-simplest-data")
-    implicit val sourceFile: Option[SourceFile] = None
 
     for {
       schema <- reader.readSchema()
       document <- reader.readDocument("name-query")
-
-      documentParser = {
-        val schemaTraversal = new SchemaTraversal(schema)
-        val schemaLookup = new SchemaLookup(schema)
-        new DocumentParser(schemaTraversal, schemaLookup)
-      }
-
-      operations <- documentParser.parse(document)
+      operations <- new DocumentParser(schema).parse(document)(None)
     } yield {
       operations.foreach { operation =>
         TreePrinter.print(operation) should be(

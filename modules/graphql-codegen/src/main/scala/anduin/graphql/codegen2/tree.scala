@@ -18,19 +18,19 @@ private[codegen2] object tree {
   ) extends Tree
 
   sealed abstract class Field extends Tree {
-    def name: String
+    def name: String = node.name
+    def node: ast.Field
     def tpe: Type
   }
 
   final case class SingleField(
-    name: String,
+    node: ast.Field,
     tpe: Type
   ) extends Field
 
   final case class CompositeField(
-    name: String,
+    node: ast.Field,
     subfields: Fields,
-    tpe: CompositeType[_],
-    possibleTypes: Set[ObjectType[_, _]]
+    tpe: CompositeType[_]
   ) extends Field
 }

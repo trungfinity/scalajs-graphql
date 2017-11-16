@@ -14,7 +14,7 @@ import sangria.schema._
 
 private[codegen2] final class SchemaTraversal(
   schema: Schema[_, _]
-)(implicit sourceFile: Option[SourceFile]) {
+) {
 
   private[this] val typeInfo = new TypeInfo(schema)
 
