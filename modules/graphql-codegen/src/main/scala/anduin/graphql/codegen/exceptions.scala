@@ -2,8 +2,6 @@
 
 package anduin.graphql.codegen
 
-import java.io.File
-
 import org.parboiled2.Position
 import sangria.{ast, schema}
 
@@ -11,7 +9,7 @@ import anduin.exception.BaseException
 
 sealed abstract class CodegenException extends BaseException {
 
-  def sourceFile: Option[File]
+  def sourceFile: Option[SourceFile]
 
   def position: Option[Position]
   protected def lineString: String = position.fold("?")(_.line.toString)
@@ -25,9 +23,9 @@ sealed abstract class CodegenUserException extends CodegenException {
 }
 
 final case class OperationNotNamedException(
-  operation: ast.OperationDefinition,
-  override val sourceFile: Option[File]
-) extends CodegenUserException {
+  operation: ast.OperationDefinition
+)(implicit val sourceFile: Option[SourceFile])
+  extends CodegenUserException {
   def position: Option[Position] = operation.position
   def details: String = "Operation must be named."
 }
@@ -43,92 +41,70 @@ sealed abstract class CodegenSystemException extends CodegenException {
   }
 }
 
-final case class EmptyNodeStackException(
-  override val sourceFile: Option[File]
+final case class EmptyNodeStackException()(
+  implicit val sourceFile: Option[SourceFile]
 ) extends CodegenSystemException {
   def position: Option[Position] = None
   def details: String = "AST node stack is empty."
 }
 
 final case class TypeNotAvailableException(
-  node: ast.AstNode,
-  override val sourceFile: Option[File]
-) extends CodegenSystemException {
+  node: ast.AstNode
+)(implicit val sourceFile: Option[SourceFile])
+  extends CodegenSystemException {
   def position: Option[Position] = node.position
   def details: String = s"AST node $node does have a corresponding type."
 }
 
 final case class NamedTypeNotAvailableException(
-  node: ast.AstNode,
   tpe: schema.Type,
-  override val cause: Throwable,
-  override val sourceFile: Option[File]
-) extends CodegenSystemException {
+  node: ast.AstNode,
+  override val cause: Throwable
+)(implicit val sourceFile: Option[SourceFile])
+  extends CodegenSystemException {
   def position: Option[Position] = node.position
   def details: String = s"AST node $node has type $tpe, expected a named type."
 }
 
 final case class UnexpectedTypeException(
-  node: ast.AstNode,
   tpe: schema.Type,
   expectedType: Class[_ <: schema.Type],
-  override val sourceFile: Option[File]
-) extends CodegenSystemException {
+  node: ast.AstNode
+)(implicit val sourceFile: Option[SourceFile])
+  extends CodegenSystemException {
   def position: Option[Position] = node.position
   def details: String = s"AST node $node has type $tpe, but expected $expectedType."
 }
 
-final case class TypeNotFoundException(
-  node: ast.AstNode,
-  name: String,
-  override val sourceFile: Option[File]
+final case class TypeNotFoundException(namedType: ast.NamedType)(
+  implicit val sourceFile: Option[SourceFile]
 ) extends CodegenSystemException {
-  def position: Option[Position] = node.position
-  def details: String = s"""Cannot find a type with name "$name"."""
-}
-
-final case class ExpectedTypeNotFoundException(
-  node: ast.AstNode,
-  name: String,
-  tpe: schema.Type,
-  expectedType: Class[_ <: schema.Type],
-  override val sourceFile: Option[File]
-) extends CodegenSystemException {
-  def position: Option[Position] = node.position
-  def details: String = s"""Type with name "$name" was found: $tpe, but expected $expectedType."""
+  def position: Option[Position] = namedType.position
+  def details: String = s"""Cannot find a type with name "${namedType.name}"."""
 }
 
 final case class FragmentNotFoundException(
-  node: ast.AstNode,
-  name: String,
-  override val sourceFile: Option[File]
-) extends CodegenSystemException {
-  def position: Option[Position] = node.position
-  def details: String = s"""Cannot find a fragment with name "$name"."""
+  fragmentSpread: ast.FragmentSpread
+)(implicit val sourceFile: Option[SourceFile])
+  extends CodegenSystemException {
+  def position: Option[Position] = fragmentSpread.position
+  def details: String = s"""Cannot find a fragment with name "${fragmentSpread.name}"."""
 }
 
 final case class PossibleTypesUnavailableException(
   tpe: schema.AbstractType,
-  override val sourceFile: Option[File]
-) extends CodegenSystemException {
-  def position: Option[Position] = None
+  node: ast.AstNode
+)(implicit val sourceFile: Option[SourceFile])
+  extends CodegenSystemException {
+  def position: Option[Position] = node.position
   def details: String = s"""Cannot find possible types for abstract type with name "${tpe.name}"."""
 }
 
 final case class ConflictedFieldsException(
   firstField: tree.Field,
-  secondField: tree.Field,
-  override val sourceFile: Option[File]
-) extends CodegenSystemException {
-  def position: Option[Position] = None
+  secondField: tree.Field
+)(implicit val sourceFile: Option[SourceFile])
+  extends CodegenSystemException {
+  def position: Option[Position] = secondField.node.position
   def details: String = s"Cannot merge 2 conflicted fields $firstField and $secondField."
-}
-
-final case class OperationTypeNotSupportedException(
-  operationType: ast.OperationType,
-  name: String,
-  override val sourceFile: Option[File]
-) extends CodegenSystemException {
-  def position: Option[Position] = None
-  def details: String = s"""Operation "$name" has unsupported type $operationType."""
 }

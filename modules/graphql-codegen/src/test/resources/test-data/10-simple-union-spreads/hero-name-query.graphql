@@ -1,0 +1,10 @@
+query GetHeroName {
+  hero {
+    ... on Human {
+      name
+    }
+    ... on Droid {
+      name
+    }
+  }
+}

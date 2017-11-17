@@ -2,8 +2,6 @@
 
 package anduin.graphql.codegen
 
-import java.io.File
-
 import scala.util.Try
 
 import sangria.ast
@@ -15,13 +13,14 @@ import sangria.schema._
 // scalastyle:on underscore.import
 
 private[codegen] final class SchemaTraversal(
-  schema: Schema[_, _],
-  sourceFile: Option[File]
+  schema: Schema[_, _]
 ) {
 
   private[this] val typeInfo = new TypeInfo(schema)
 
-  def scope[A](node: ast.AstNode)(action: => Result[A]): Result[A] = {
+  def scope[A](node: ast.AstNode)(action: => Result[A])(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[A] = {
     for {
       _ <- Right(typeInfo.enter(node))
       attempt <- action.attempt
@@ -30,29 +29,37 @@ private[codegen] final class SchemaTraversal(
     } yield result
   }
 
-  def currentNode: Result[ast.AstNode] = {
-    typeInfo.ancestors.lastOption.toRight(EmptyNodeStackException(sourceFile))
+  def currentNode(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[ast.AstNode] = {
+    typeInfo.ancestors.lastOption.toRight(EmptyNodeStackException())
   }
 
-  def currentType: Result[Type] = {
+  def currentType(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[Type] = {
     for {
       node <- currentNode
-      tpe <- typeInfo.tpe.toRight(TypeNotAvailableException(node, sourceFile))
+      tpe <- typeInfo.tpe.toRight(TypeNotAvailableException(node))
     } yield tpe
   }
 
-  def currentNamedType: Result[Type with Named] = {
+  def currentNamedType(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[Type with Named] = {
     for {
       node <- currentNode
       tpe <- currentType
       namedType <- Try(tpe.namedType).toEither.left.map {
-        NamedTypeNotAvailableException(node, tpe, _, sourceFile)
+        NamedTypeNotAvailableException(tpe, node, _)
       }
     } yield namedType
   }
 
   private[this] def specificCurrentType[A](
     filter: (ast.AstNode, Type) => Result[A]
+  )(
+    implicit sourceFile: Option[SourceFile]
   ): Result[A] = {
     for {
       node <- currentNode
@@ -61,20 +68,24 @@ private[codegen] final class SchemaTraversal(
     } yield specificType
   }
 
-  def currentCompositeType: Result[CompositeType[_]] = {
+  def currentCompositeType(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[CompositeType[_]] = {
     specificCurrentType { (node, tpe) =>
       tpe match {
         case compositeType: CompositeType[_] => Right(compositeType)
-        case _ => Left(UnexpectedTypeException(node, tpe, classOf[CompositeType[_]], sourceFile))
+        case _ => Left(UnexpectedTypeException(tpe, classOf[CompositeType[_]], node))
       }
     }
   }
 
-  def currentObjectType: Result[ObjectType[_, _]] = {
+  def currentObjectType(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[ObjectType[_, _]] = {
     specificCurrentType { (node, tpe) =>
       tpe match {
         case objectType: ObjectType[_, _] => Right(objectType)
-        case _ => Left(UnexpectedTypeException(node, tpe, classOf[ObjectType[_, _]], sourceFile))
+        case _ => Left(UnexpectedTypeException(tpe, classOf[ObjectType[_, _]], node))
       }
     }
   }
