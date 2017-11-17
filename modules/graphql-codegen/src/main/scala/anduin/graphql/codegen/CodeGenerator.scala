@@ -1,6 +1,6 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-package anduin.graphql.codegen2
+package anduin.graphql.codegen
 
 import sangria.{ast, schema}
 import sangria.introspection.TypeNameMetaField
@@ -12,7 +12,7 @@ import scala.meta._
 
 // scalastyle:off multiple.string.literals
 
-private[codegen2] final class CodeGenerator(
+private[codegen] final class CodeGenerator(
   packageName: Option[String]
 ) {
 
@@ -171,7 +171,7 @@ private[codegen2] final class CodeGenerator(
   }
 }
 
-private[codegen2] object CodeGenerator {
+private[codegen] object CodeGenerator {
 
   private def ListTypeName = Type.Name("_root_.scala.List")
   private def OptionTypeName = Type.Name("_root_.scala.Option")

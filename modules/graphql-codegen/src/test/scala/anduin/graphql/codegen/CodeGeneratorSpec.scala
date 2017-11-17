@@ -1,6 +1,6 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-package anduin.graphql.codegen2
+package anduin.graphql.codegen
 
 import org.scalatest.{EitherValues, WordSpec}
 import sangria.validation.QueryValidator

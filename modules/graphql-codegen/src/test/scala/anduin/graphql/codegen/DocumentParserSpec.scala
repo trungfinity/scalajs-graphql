@@ -1,6 +1,6 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-package anduin.graphql.codegen2
+package anduin.graphql.codegen
 
 import org.scalatest.{EitherValues, Matchers, WordSpec}
 
@@ -10,7 +10,7 @@ import anduin.graphql.test.TestDataSupport
 import cats.implicits._
 // scalastyle:on underscore.import
 
-final class DocumentParser2Spec extends WordSpec with Matchers with EitherValues {
+final class DocumentParserSpec extends WordSpec with Matchers with EitherValues {
 
   private[this] def withTestData(testDataName: String)(
     run: (String => String => Unit) => Any

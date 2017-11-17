@@ -1,6 +1,6 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-package anduin.graphql.codegen2
+package anduin.graphql.codegen
 
 import sangria.ast
 
@@ -8,7 +8,7 @@ import sangria.ast
 import sangria.schema._
 // scalastyle:on underscore.import
 
-private[codegen2] object TreePrinter {
+private[codegen] object TreePrinter {
 
   private val Space = " "
   private val NewLine = "\n"

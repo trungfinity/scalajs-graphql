@@ -2,52 +2,61 @@
 
 package anduin.graphql.codegen
 
-import java.io.File
+import sangria.ast
 
-import sangria.{ast, schema => sc}
+// scalastyle:off underscore.import
+import sangria.schema._
+// scalastyle:on underscore.import
 
 private[codegen] final class SchemaLookup(
-  schema: sc.Schema[_, _],
-  sourceFile: Option[File]
+  schema: Schema[_, _]
 ) {
 
-  def findType(node: ast.AstNode, name: String): Result[sc.Type] = {
+  def findType(namedType: ast.NamedType)(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[Type] = {
     schema.allTypes
-      .get(name)
-      .toRight(TypeNotFoundException(node, name, sourceFile))
+      .get(namedType.name)
+      .toRight(TypeNotFoundException(namedType))
   }
 
-  def findCompositeType(node: ast.AstNode, name: String): Result[sc.CompositeType[_]] = {
+  def findCompositeType(namedType: ast.NamedType)(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[CompositeType[_]] = {
     for {
-      tpe <- findType(node, name)
+      tpe <- findType(namedType)
       compositeType <- tpe match {
-        case compositeType: sc.CompositeType[_] =>
-          Right(compositeType)
-
-        case _ =>
-          val compositeTypeClass = classOf[sc.CompositeType[_]]
-          Left(ExpectedTypeNotFoundException(node, name, tpe, compositeTypeClass, sourceFile))
+        case compositeType: CompositeType[_] => Right(compositeType)
+        case _ => Left(UnexpectedTypeException(tpe, classOf[CompositeType[_]], namedType))
       }
-    } yield compositeType: sc.CompositeType[_]
+    } yield compositeType: CompositeType[_]
   }
 
-  def findPossibleTypes(compositeType: sc.CompositeType[_]): Result[Set[sc.ObjectType[_, _]]] = {
-    compositeType match {
-      case abstractType: sc.AbstractType =>
+  def findPossibleTypes(
+    tpe: CompositeType[_],
+    node: ast.AstNode
+  )(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[Set[ObjectType[_, _]]] = {
+    tpe match {
+      case abstractType: AbstractType =>
         schema.possibleTypes
-          .get(compositeType.name)
+          .get(tpe.name)
           .map(_.toSet)
-          .toRight(PossibleTypesUnavailableException(abstractType, sourceFile))
+          .toRight(PossibleTypesUnavailableException(abstractType, node))
 
-      case objectType: sc.ObjectType[_, _] =>
+      case objectType: ObjectType[_, _] =>
         Right(Set(objectType))
     }
   }
 
   def narrowPossibleTypes(
-    possibleTypes: Set[sc.ObjectType[_, _]],
-    conditionType: sc.CompositeType[_]
-  ): Result[Set[sc.ObjectType[_, _]]] = {
-    findPossibleTypes(conditionType).map(_.intersect(possibleTypes))
+    possibleTypes: Set[ObjectType[_, _]],
+    typeCondition: CompositeType[_],
+    namedType: ast.NamedType
+  )(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[Set[ObjectType[_, _]]] = {
+    findPossibleTypes(typeCondition, namedType).map(_.intersect(possibleTypes))
   }
 }

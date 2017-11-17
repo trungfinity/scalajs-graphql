@@ -2,33 +2,39 @@
 
 package anduin.graphql.codegen
 
-import sangria.{ast, schema}
+import sangria.ast
+import sangria.schema.{CompositeType, ObjectType, Type}
 
 private[codegen] object tree {
 
-  type Fields = Map[schema.CompositeType[_], Vector[Field]]
+  type Fields = Map[CompositeType[_], Vector[Field]]
 
   sealed abstract class Tree extends Product with Serializable
 
   final case class Operation(
     name: String,
     operationType: ast.OperationType,
-    underlying: CompositeField
+    underlyingField: CompositeField
   ) extends Tree
 
   sealed abstract class Field extends Tree {
-    def name: String
-    def tpe: schema.Type
+    def name: String = node.name
+    def node: ast.Field
+    def tpe: Type
   }
 
-  final case class CompositeField(
-    name: String,
-    fields: Fields,
-    tpe: schema.CompositeType[_]
+  final case class SingleField(
+    node: ast.Field,
+    tpe: Type
   ) extends Field
 
-  final case class SimpleField(
-    name: String,
-    tpe: schema.Type
-  ) extends Field
+  final case class CompositeField(
+    node: ast.Field,
+    subfields: Fields,
+    tpe: CompositeType[_],
+    possibleTypes: Set[ObjectType[_, _]]
+  ) extends Field {
+    def baseTypeFields: Vector[Field] = subfields.getOrElse(tpe, Vector.empty)
+    def subtypeFields: Fields = subfields.filterKeys(_ != tpe)
+  }
 }
