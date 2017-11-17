@@ -1,0 +1,17 @@
+type Human {
+  name: String!
+}
+
+type Droid {
+  name: String!
+}
+
+union Hero = Human | Droid
+
+type Query {
+  hero: Hero
+}
+
+schema {
+  query: Query
+}
