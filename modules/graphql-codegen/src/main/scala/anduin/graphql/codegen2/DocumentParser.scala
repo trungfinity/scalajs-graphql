@@ -141,9 +141,7 @@ private[codegen2] final class DocumentParser(
     implicit document: ast.Document,
     sourceFile: Option[SourceFile]
   ): Result[tree.Fields] = {
-    for {
-      fields <- selections.foldMapM(parseSelection(_, possibleTypes, scope))
-    } yield fields
+    selections.foldMapM(parseSelection(_, possibleTypes, scope))
   }
 
   private[this] def parseOperation(
@@ -161,28 +159,33 @@ private[codegen2] final class DocumentParser(
         for {
           objectType <- schemaTraversal.currentObjectType
           possibleTypes <- schemaLookup.findPossibleTypes(objectType, astOperation)
+
           subfields <- parseSelections(
             astOperation.selections,
             possibleTypes,
             SelectionScope(objectType, possibleTypes)
           )
-        } yield {
-          // Create a dummy field node for this operation
-          val underlyingFieldNode = ast.Field(
-            alias = None,
-            name = "data",
-            arguments = Vector.empty,
-            directives = astOperation.directives,
-            selections = astOperation.selections,
-            comments = astOperation.comments,
-            trailingComments = astOperation.trailingComments,
-            position = astOperation.position
-          )
 
+          underlyingField <- {
+            // Create a dummy field node for this operation
+            val node = ast.Field(
+              alias = None,
+              name = "data",
+              arguments = Vector.empty,
+              directives = astOperation.directives,
+              selections = astOperation.selections,
+              comments = astOperation.comments,
+              trailingComments = astOperation.trailingComments,
+              position = astOperation.position
+            )
+
+            FieldMerger.merge(tree.CompositeField(node, subfields, objectType))
+          }
+        } yield {
           tree.Operation(
             operationName,
             astOperation.operationType,
-            tree.CompositeField(underlyingFieldNode, subfields, objectType)
+            underlyingField
           )
         }
       }

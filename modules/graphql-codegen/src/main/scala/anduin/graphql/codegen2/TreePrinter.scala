@@ -54,18 +54,18 @@ private[codegen2] object TreePrinter {
 
       case compositeField: tree.CompositeField =>
         builder ++= NewLine
-        printFields(compositeField.subfields, builder, indentation + 2)
+        printSubFields(compositeField.subfields, builder, indentation + 2)
     }
   }
 
-  private def printFields(
+  private def printSubFields(
     fields: tree.Fields,
     builder: StringBuilder,
     indentation: Int = 0
   ): Unit = {
     fields.foreach {
       case (container, fieldsByContainer) =>
-        fieldsByContainer.foreach { field =>
+        fieldsByContainer.sortBy(_.name).foreach { field =>
           builder ++= (Space * indentation)
           builder ++= container.name
           builder ++= ": "

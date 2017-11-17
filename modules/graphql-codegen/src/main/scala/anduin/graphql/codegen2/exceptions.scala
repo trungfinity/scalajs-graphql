@@ -100,20 +100,11 @@ final case class PossibleTypesUnavailableException(
   def details: String = s"""Cannot find possible types for abstract type with name "${tpe.name}"."""
 }
 
-//final case class ConflictedFieldsException(
-//  firstField: tree.Field,
-//  secondField: tree.Field
-//)(implicit val sourceFile: Option[SourceFile])
-//  extends CodegenSystemException {
-//  def position: Option[Position] = None
-//  def details: String = s"Cannot merge 2 conflicted fields $firstField and $secondField."
-//}
-//
-//final case class OperationTypeNotSupportedException(
-//  operationType: ast.OperationType,
-//  name: String
-//)(implicit val sourceFile: Option[SourceFile])
-//  extends CodegenSystemException {
-//  def position: Option[Position] = None
-//  def details: String = s"""Operation "$name" has unsupported type $operationType."""
-//}
+final case class ConflictedFieldsException(
+  firstField: tree.Field,
+  secondField: tree.Field
+)(implicit val sourceFile: Option[SourceFile])
+  extends CodegenSystemException {
+  def position: Option[Position] = secondField.node.position
+  def details: String = s"Cannot merge 2 conflicted fields $firstField and $secondField."
+}
