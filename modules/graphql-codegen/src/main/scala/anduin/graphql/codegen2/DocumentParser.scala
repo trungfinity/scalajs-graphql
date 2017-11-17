@@ -40,7 +40,7 @@ private[codegen2] final class DocumentParser(
               SelectionScope(fieldCompositeType, fieldPossibleTypes)
             )
           } yield {
-            tree.CompositeField(astField, subfields, fieldCompositeType)
+            tree.CompositeField(astField, subfields, fieldCompositeType, fieldPossibleTypes)
           }
 
         case _ =>
@@ -179,7 +179,7 @@ private[codegen2] final class DocumentParser(
               position = astOperation.position
             )
 
-            FieldMerger.merge(tree.CompositeField(node, subfields, objectType))
+            FieldMerger.merge(tree.CompositeField(node, subfields, objectType, possibleTypes))
           }
         } yield {
           tree.Operation(

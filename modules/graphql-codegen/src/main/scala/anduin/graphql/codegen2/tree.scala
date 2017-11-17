@@ -31,6 +31,7 @@ private[codegen2] object tree {
   final case class CompositeField(
     node: ast.Field,
     subfields: Fields,
-    tpe: CompositeType[_]
+    tpe: CompositeType[_],
+    possibleTypes: Set[ObjectType[_, _]]
   ) extends Field
 }
