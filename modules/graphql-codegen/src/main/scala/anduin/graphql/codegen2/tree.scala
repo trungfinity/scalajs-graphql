@@ -33,5 +33,8 @@ private[codegen2] object tree {
     subfields: Fields,
     tpe: CompositeType[_],
     possibleTypes: Set[ObjectType[_, _]]
-  ) extends Field
+  ) extends Field {
+    def baseTypeFields: Vector[Field] = subfields.getOrElse(tpe, Vector.empty)
+    def subtypeFields: Fields = subfields.filterKeys(_ != tpe)
+  }
 }

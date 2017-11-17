@@ -69,17 +69,11 @@ private[codegen2] object FieldMerger {
     // 2. Sub-types must have all fields from the base type
 
     for {
-      baseTypeFields <- mergeFields(
-        field.subfields.getOrElse(field.tpe, Vector.empty)
-      )
-
-      subtypeFields <- field.subfields
-        .filterKeys(_ != field.tpe)
-        .toVector
-        .foldMapM[Result, tree.Fields] {
-          case (subtype, fields) =>
-            mergeFields(fields).map(fields => Map(subtype -> fields))
-        }
+      baseTypeFields <- mergeFields(field.baseTypeFields)
+      subtypeFields <- field.subtypeFields.toVector.foldMapM[Result, tree.Fields] {
+        case (subtype, fields) =>
+          mergeFields(fields).map(fields => Map(subtype -> fields))
+      }
     } yield {
       val subfields = Map(field.tpe -> baseTypeFields) ++ subtypeFields
       field.copy(subfields = subfields)
