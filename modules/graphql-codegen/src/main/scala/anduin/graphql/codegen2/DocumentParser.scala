@@ -168,6 +168,7 @@ private[codegen2] final class DocumentParser(
 
           underlyingField <- {
             // Create a dummy field node for this operation
+            // In particular this pattern should be eliminated
             val node = ast.Field(
               alias = None,
               name = "data",

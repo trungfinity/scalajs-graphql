@@ -65,7 +65,7 @@ private[codegen2] object TreePrinter {
   ): Unit = {
     fields.foreach {
       case (container, fieldsByContainer) =>
-        fieldsByContainer.sortBy(_.name).foreach { field =>
+        fieldsByContainer.foreach { field =>
           builder ++= (Space * indentation)
           builder ++= container.name
           builder ++= ": "

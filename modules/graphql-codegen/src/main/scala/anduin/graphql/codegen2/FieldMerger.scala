@@ -59,14 +59,16 @@ private[codegen2] object FieldMerger {
           .map { mergeSameNameFields(_).map(Vector(_)) }
           .getOrElse(Right(Vector.empty))
       }
+      .map(_.sortBy(_.name))
   }
 
   def merge(field: tree.CompositeField)(
     implicit sourceFile: Option[SourceFile]
   ): Result[tree.CompositeField] = {
-    // There are two requirements:
+    // Three equirements:
     // 1. Duplicate sub-fields must be deeply merged
     // 2. Sub-types must have all fields from the base type
+    // 3. Fields must be listed in alphabetical order
 
     for {
       baseTypeFields <- mergeFields(field.baseTypeFields)
