@@ -192,12 +192,15 @@ private[codegen2] final class DocumentParser(
     } yield operation
   }
 
-  def parse(document: ast.Document)(
-    implicit sourceFile: Option[SourceFile]
+  def parse(
+    document: ast.Document,
+    sourceFile: Option[SourceFile] = None
   ): Result[Vector[tree.Operation]] = {
-    document.operations.values.toVector.foldMapM[Result, Vector[tree.Operation]] { operation =>
-      parseOperation(operation)(document, sourceFile).map(Vector(_))
-    }
+    document.operations.values.toVector
+      .foldMapM[Result, Vector[tree.Operation]] { operation =>
+        parseOperation(operation)(document, sourceFile).map(Vector(_))
+      }
+      .map(_.sortBy(_.name))
   }
 }
 
