@@ -16,6 +16,11 @@ lazy val `graphql-codegen` = project
 lazy val `graphql-codegen-cli` = project
   .in(file("codegen-cli"))
   .dependsOn(`graphql-codegen`)
+  .settings(
+    libraryDependencies ++= Seq(
+      Dependencies.CaseApp.value
+    )
+  )
 
 lazy val `sbt-graphql-codegen` = project
   .in(file("sbt-codegen"))

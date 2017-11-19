@@ -14,6 +14,7 @@ trait DependencyImports {
   // Alphabetical order (case insensitive)
 
   object Versions {
+    val CaseApp = "1.2.0-M4"
     val Cats = "1.0.0-RC1"
     val CatsEffect = "0.5"
     val Circe = "0.9.0-M2"
@@ -28,6 +29,7 @@ trait DependencyImports {
 
     private val v = Versions
 
+    val CaseApp = s("com.github.alexarchambault" %% "case-app" % v.CaseApp)
     val CatsCore = s("org.typelevel" %%% "cats-core" % v.Cats)
     val CatsEffect = s("org.typelevel" %%% "cats-effect" % v.CatsEffect)
     val CirceGeneric = s("io.circe" %%% "circe-generic" % v.Circe)

@@ -12,11 +12,24 @@ import scala.meta._
 
 // scalastyle:off multiple.string.literals
 
-private[codegen] final class CodeGenerator(
-  packageName: Option[String]
-) {
+private[codegen] object CodeGenerator {
 
-  import CodeGenerator._ // scalastyle:ignore import.grouping underscore.import
+  private val ListTypeName = Type.Name("_root_.scala.List")
+  private val OptionTypeName = Type.Name("_root_.scala.Option")
+
+  private val SetTermName = Term.Name("_root_.scala.collection.immutable.Set")
+  private val SetTypeName = Type.Name("_root_.scala.collection.immutable.Set")
+
+  private val TypenameField = tree.SingleField(
+    ast.Field(
+      alias = None,
+      name = TypeNameMetaField.name,
+      arguments = Vector.empty,
+      directives = Vector.empty,
+      selections = Vector.empty
+    ),
+    schema.StringType
+  )
 
   private def generateFieldType(tpe: schema.Type)(innermostType: => Type): Type = {
     tpe match {
@@ -77,7 +90,7 @@ private[codegen] final class CodeGenerator(
     val className = field.name.capitalize
 
     val baseTypeFields = if (field.subtypeFields.nonEmpty) {
-      field.baseTypeFields.toList :+ typenameField
+      field.baseTypeFields.toList :+ TypenameField
     } else {
       field.baseTypeFields.toList
     }
@@ -156,7 +169,7 @@ private[codegen] final class CodeGenerator(
     List(clazz, companionObject)
   }
 
-  def generate(operation: tree.Operation): Stat = {
+  def generate(operation: tree.Operation, packageName: Option[String] = None): Stat = {
     val classNameSuffix = operation.operationType match {
       case ast.OperationType.Query => "Query"
       case ast.OperationType.Mutation => "Mutation"
@@ -177,24 +190,4 @@ private[codegen] final class CodeGenerator(
       """
     }
   }
-}
-
-private[codegen] object CodeGenerator {
-
-  private def ListTypeName = Type.Name("_root_.scala.List")
-  private def OptionTypeName = Type.Name("_root_.scala.Option")
-
-  private def SetTermName = Term.Name("_root_.scala.collection.immutable.Set")
-  private def SetTypeName = Type.Name("_root_.scala.collection.immutable.Set")
-
-  private val typenameField = tree.SingleField(
-    ast.Field(
-      alias = None,
-      name = TypeNameMetaField.name,
-      arguments = Vector.empty,
-      directives = Vector.empty,
-      selections = Vector.empty
-    ),
-    schema.StringType
-  )
 }
