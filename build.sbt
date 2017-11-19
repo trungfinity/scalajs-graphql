@@ -24,8 +24,9 @@ lazy val `graphql-codegen` = project
     )
   )
 
-lazy val fetch = project in (file("modules") / "fetch")
 lazy val apollo = project in (file("modules") / "apollo")
+lazy val fetch = project in (file("modules") / "fetch")
+lazy val noton = project in (file("modules") / "noton")
 
 lazy val `scala-graphql` = project
   .in(file("."))
