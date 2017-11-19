@@ -156,18 +156,26 @@ private[codegen] final class CodeGenerator(
     List(clazz, companionObject)
   }
 
-  def generate(operation: tree.Operation): Defn.Object = {
+  def generate(operation: tree.Operation): Stat = {
     val classNameSuffix = operation.operationType match {
       case ast.OperationType.Query => "Query"
       case ast.OperationType.Mutation => "Mutation"
       case ast.OperationType.Subscription => "Subscription"
     }
 
-    q"""
-      object ${Term.Name(s"${operation.name.capitalize}$classNameSuffix")} {
-        ..${generateCompositeField(operation.underlyingField)}
-      }
-    """
+    packageName.foldLeft[Stat](
+      q"""
+        object ${Term.Name(s"${operation.name.capitalize}$classNameSuffix")} {
+          ..${generateCompositeField(operation.underlyingField)}
+        }
+      """
+    ) { (`object`, packageName) =>
+      q"""
+        package ${Term.Name(packageName)} {
+          ${`object`}
+        }
+      """
+    }
   }
 }
 
