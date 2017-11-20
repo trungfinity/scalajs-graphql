@@ -15,7 +15,6 @@ final class CodeGeneratorSpec extends WordSpec with EitherValues {
       TestDataSupport.withTestData("10-simple-union-spreads") { (schema, readDocument) =>
         val parser = new DocumentParser(schema)
         val document = readDocument("hero-name-query.graphql")
-        val generator = new CodeGenerator(Some("anduin.graphql.example"))
 
         QueryValidator.default.validateQuery(schema, document).foreach { violation =>
           println(violation.errorMessage)
@@ -25,7 +24,7 @@ final class CodeGeneratorSpec extends WordSpec with EitherValues {
           operations <- parser.parse(document)
         } yield {
           operations.foreach { operation =>
-            println(generator.generate(operation))
+            println(CodeGenerator.generate(operation, Some("anduin.graphql.example")))
           }
         }
 

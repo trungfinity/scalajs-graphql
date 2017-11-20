@@ -93,12 +93,14 @@ private[codegen] object TreePrinter {
     printField(operation.underlyingField, builder, indentation + 2)
   }
 
-  def print(t: tree.Tree): String = {
+  def print(tree: anduin.graphql.codegen.tree.Tree): String = {
+    import anduin.graphql.codegen.tree._ // scalastyle:ignore import.grouping underscore.import
+
     val builder = StringBuilder.newBuilder
 
-    t match {
-      case operation: tree.Operation => printOperation(operation, builder)
-      case field: tree.Field => printField(field, builder)
+    tree match {
+      case operation: Operation => printOperation(operation, builder)
+      case field: Field => printField(field, builder)
     }
 
     builder.result()
