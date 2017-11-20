@@ -1,2 +1,3 @@
-> graphql-codegen
-$ exists target/scala-2.12/src_managed/main/sbt-graphql-codegen/GetNameAndAgeQuery.scala
+> run
+$ exists target/scala-2.12/src_managed/main/sbt-graphql-codegen/anduin/graphql/example/GetNameQuery.scala
+$ exists target/scala-2.12/src_managed/main/sbt-graphql-codegen/anduin/graphql/example/GetNameAndAgeQuery.scala

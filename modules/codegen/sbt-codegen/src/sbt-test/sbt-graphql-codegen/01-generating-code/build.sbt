@@ -3,6 +3,8 @@
 lazy val root = project
   .in(file("."))
   .settings(
-    scalaVersion := "2.12.4"
+    scalaVersion := "2.12.4",
+    graphqlCodegenPackage in Compile := Some("anduin.graphql.example"),
+    scalaJSUseMainModuleInitializer in Compile := true
   )
   .enablePlugins(GraphqlCodegenPlugin)
