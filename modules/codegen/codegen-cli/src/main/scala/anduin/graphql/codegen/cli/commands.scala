@@ -29,15 +29,15 @@ sealed abstract class CodegenCommand extends Product with Serializable {
 final case class GenerateOperations(
   @Name("s") schema: String,
   @Name("p") `package`: Option[String],
-  @Name("o") out: Option[String]
+  @Name("o") output: Option[String]
 ) extends CodegenCommand { self =>
 
   private[this] def outputStream(filename: String): Result[PrintStream] = {
-    out.fold[Result[PrintStream]](
+    output.fold[Result[PrintStream]](
       Right(System.out)
-    ) { out =>
-      val dir = `package`.fold(out) { `package` =>
-        s"$out/${`package`.replace('.', File.separatorChar)}"
+    ) { output =>
+      val dir = `package`.fold(output) { `package` =>
+        s"$output/${`package`.replace('.', File.separatorChar)}"
       }
 
       val path = s"$dir${File.separator}$filename"
