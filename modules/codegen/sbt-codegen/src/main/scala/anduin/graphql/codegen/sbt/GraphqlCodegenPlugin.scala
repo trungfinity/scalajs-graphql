@@ -39,7 +39,7 @@ object GraphqlCodegenPlugin extends AutoPlugin {
       "Whether to clean output directory before generating code."
     )
 
-    val graphqlCodegen = TaskKey[File](
+    val graphqlCodegen = TaskKey[Seq[File]](
       "graphql-codegen",
       "Generate GraphQL code"
     )
@@ -115,9 +115,9 @@ object GraphqlCodegenPlugin extends AutoPlugin {
             streams.value.log
           )
 
-          output
+          (output ** "*.scala").get
         },
-        sourceGenerators += Def.task { Seq(graphqlCodegen.value) }
+        sourceGenerators += graphqlCodegen.taskValue
       )
     )
   }
