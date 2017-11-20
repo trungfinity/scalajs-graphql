@@ -1,5 +1,7 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
+lazy val `scalajs-noton-generic` = LocalProject("scalajs-noton-generic")
+
 lazy val `graphql-codegen` = project
   .in(file("codegen"))
   .settings(
@@ -30,8 +32,15 @@ lazy val `graphql-codegen-cli` = project
 lazy val `sbt-graphql-codegen` = project
   .in(file("sbt-codegen"))
   .settings(
-    sbtPlugin := true
+    sbtPlugin := true,
+    scalaVersion := "2.10.7",
+    buildInfoKeys := Seq[BuildInfoKey](version),
+    buildInfoPackage := "anduin.graphql.codegen.sbt",
+    publishLocal := publishLocal
+      .dependsOn(publishLocal in `graphql-codegen-cli`)
+      .dependsOn(publishLocal in `scalajs-noton-generic`)
   )
+  .enablePlugins(BuildInfoPlugin)
 
 lazy val codegen = project
   .in(file("."))
