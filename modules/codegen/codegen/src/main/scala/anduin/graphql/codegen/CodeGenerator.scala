@@ -88,6 +88,7 @@ private[codegen] object CodeGenerator {
     field: tree.CompositeField
   ): List[Stat] = {
     val className = field.name.capitalize
+    val classTypeName = Type.Name(className)
 
     val baseTypeFields = if (field.subtypeFields.nonEmpty) {
       field.baseTypeFields.toList :+ TypenameField
@@ -109,7 +110,9 @@ private[codegen] object CodeGenerator {
 
         q"""
           def ${Term.Name(s"as$projectionClassName")}: $projectionReturningType = {
-            if ($projectionTermName.PossibleTypes.contains(__typename)) {
+            val typename = any.asInstanceOf[_root_.scala.scalajs.js.Dynamic].__typename
+
+            if ($projectionTermName.possibleTypes.contains(typename)) {
               _root_.scala.Some($projectionTermName(..$subfieldParams))
             } else {
               _root_.scala.None
@@ -119,9 +122,9 @@ private[codegen] object CodeGenerator {
     }
 
     val clazz = q"""
-      final case class ${Type.Name(className)} (
+      final case class $classTypeName (
         ..${generateSubfieldParams(baseTypeFields, className)}
-      ) {
+      )(any: _root_.scala.scalajs.js.Any) {
         ..$projectionMethods
       }
     """
@@ -158,9 +161,15 @@ private[codegen] object CodeGenerator {
         )
     }
 
+    // There is a known issue: class name, sub-field type names
+    // and projection type names could clash.
     val companionObject = q"""
       object ${Term.Name(className)} {
-        val PossibleTypes: $SetTypeName[String] = $SetTermName(..$possibleTypeLiterals)
+        val possibleTypes: $SetTypeName[String] = $SetTermName(..$possibleTypeLiterals)
+
+        implicit val decoder: _root_.anduin.scalajs.noton.Decoder[$classTypeName] =
+          _root_.anduin.scalajs.noton.generic.deriveDecoder[$classTypeName]
+
         ..${generateSubfieldTypes(baseTypeFields)}
         ..$projectionTypes
       }
