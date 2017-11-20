@@ -21,6 +21,7 @@ trait DependencyImports {
     val Http4s = "0.17.5"
     val Sangria = "1.3.2"
     val SangriaCirce = "1.1.0"
+    val Scalajs = "0.6.20"
     val ScalajsReact = "1.1.1"
     val ScalaMacrosParadise = "2.1.1"
     val Scalameta = "2.1.2"
@@ -40,6 +41,7 @@ trait DependencyImports {
     val CirceScalajs = s("io.circe" %%% "circe-scalajs" % v.Circe)
     val Http4sClient = s("org.http4s" %% "http4s-blaze-client" % v.Http4s)
     val Sangria = s("org.sangria-graphql" %% "sangria" % v.Sangria)
+    val Scalajs = s("org.scala-js" % "sbt-scalajs" % v.Scalajs)
     val Scalameta = s("org.scalameta" %% "scalameta" % v.Scalameta)
     val ScalaTest = s("org.scalatest" %%% "scalatest" % v.ScalaTest)
     val Slf4jNop = s("org.slf4j" % "slf4j-nop" % v.Slf4j)

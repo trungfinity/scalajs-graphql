@@ -2,7 +2,10 @@
 
 package anduin.graphql.codegen.sbt
 
+import org.scalajs.sbtplugin.ScalaJSPlugin
+
 // scalastyle:off underscore.import
+import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._
 import sbt._
 import sbt.Keys._
 // scalastyle:on underscore.import
@@ -10,7 +13,7 @@ import sbt.Keys._
 object GraphqlCodegenPlugin extends AutoPlugin {
 
   override lazy val trigger: PluginTrigger = noTrigger
-  override lazy val requires: Plugins = plugins.JvmPlugin
+  override lazy val requires: Plugins = ScalaJSPlugin
 
   object autoImport {
 
@@ -49,7 +52,7 @@ object GraphqlCodegenPlugin extends AutoPlugin {
       ivyConfigurations += GraphqlCodegen,
       libraryDependencies ++= List(
         "com.anduintransact" %% "graphql-codegen-cli" % BuildInfo.version % GraphqlCodegen,
-        "com.anduintransact" %% "scalajs-noton-generic" % BuildInfo.version
+        "com.anduintransact" %%% "scalajs-noton-generic" % BuildInfo.version
       ),
       mainClass in GraphqlCodegen := Some("anduin.graphql.codegen.cli.CodegenCli"),
       fullClasspath in GraphqlCodegen := Classpaths
@@ -91,12 +94,16 @@ object GraphqlCodegenPlugin extends AutoPlugin {
             IO.delete(output)
           }
 
-          val documents = graphqlCodegenDocuments.value.map(_.getAbsolutePath)
+          val schema = graphqlCodegenSchema.value.getAbsolutePath
+          val documents = graphqlCodegenDocuments.value
+            .map(_.getAbsolutePath)
+            .filter(_ != schema)
+
           val packageOption = graphqlCodegenPackage.value.toSeq.flatMap { `package` =>
             Seq("--package", `package`)
           }
 
-          val options = Seq("gen-ops", "--schema", graphqlCodegenSchema.value.getAbsolutePath) ++
+          val options = Seq("gen-ops", "--schema", schema) ++
             packageOption ++
             Seq("--output", output.getAbsolutePath) ++
             documents
