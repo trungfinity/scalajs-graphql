@@ -25,4 +25,14 @@ object Decoder {
   }
 
   // scalastyle:on token
+
+  implicit def optionDecoder[A](implicit decoder: Decoder[A]): Decoder[Option[A]] = {
+    instance { any =>
+      if (!js.isUndefined(any) && any != null) { // scalastyle:ignore null
+        decoder(any).map(Some(_))
+      } else {
+        Right(None)
+      }
+    }
+  }
 }
