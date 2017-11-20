@@ -18,11 +18,14 @@ trait DependencyImports {
     val Cats = "1.0.0-RC1"
     val CatsEffect = "0.5"
     val Circe = "0.9.0-M2"
+    val Http4s = "0.17.5"
     val Sangria = "1.3.2"
+    val SangriaCirce = "1.1.0"
     val ScalajsReact = "1.1.1"
     val ScalaMacrosParadise = "2.1.1"
     val Scalameta = "2.1.2"
     val ScalaTest = "3.0.4"
+    val Slf4j = "1.7.25"
   }
 
   object Dependencies {
@@ -33,12 +36,16 @@ trait DependencyImports {
     val CatsCore = s("org.typelevel" %%% "cats-core" % v.Cats)
     val CatsEffect = s("org.typelevel" %%% "cats-effect" % v.CatsEffect)
     val CirceGeneric = s("io.circe" %%% "circe-generic" % v.Circe)
+    val CirceParser = s("io.circe" %%% "circe-parser" % v.Circe)
     val CirceScalajs = s("io.circe" %%% "circe-scalajs" % v.Circe)
+    val Http4sClient = s("org.http4s" %% "http4s-blaze-client" % v.Http4s)
     val Sangria = s("org.sangria-graphql" %% "sangria" % v.Sangria)
     val Scalameta = s("org.scalameta" %% "scalameta" % v.Scalameta)
     val ScalaTest = s("org.scalatest" %%% "scalatest" % v.ScalaTest)
+    val Slf4jNop = s("org.slf4j" % "slf4j-nop" % v.Slf4j)
 
     // format: off
+    val SangriaCirce = s("org.sangria-graphql" %% "sangria-circe" % v.SangriaCirce)
     val ScalajsReactCore = s("com.github.japgolly.scalajs-react" %%% "core" % v.ScalajsReact)
     val ScalaMacrosParadise = s("org.scalamacros" % "paradise" % v.ScalaMacrosParadise cross CrossVersion.full)
     // format: on

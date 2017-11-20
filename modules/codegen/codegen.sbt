@@ -18,8 +18,13 @@ lazy val `graphql-codegen-cli` = project
   .dependsOn(`graphql-codegen`)
   .settings(
     libraryDependencies ++= Seq(
-      Dependencies.CaseApp.value
-    )
+      Dependencies.CaseApp.value,
+      Dependencies.CirceParser.value,
+      Dependencies.Http4sClient.value,
+      Dependencies.SangriaCirce.value,
+      Dependencies.Slf4jNop.value
+    ),
+    fork in run := true
   )
 
 lazy val `sbt-graphql-codegen` = project

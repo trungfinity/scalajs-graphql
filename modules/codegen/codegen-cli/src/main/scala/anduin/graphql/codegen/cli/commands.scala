@@ -2,15 +2,14 @@
 
 package anduin.graphql.codegen.cli
 
-import scala.io.Source
+import java.io.{File, FileNotFoundException, PrintStream}
+
 import scala.meta.prettyprinters.Syntax
 
-import sangria.ast.Document
-import sangria.parser.{DeliveryScheme, QueryParser}
-import sangria.schema.Schema
+import sangria.ast
 import sangria.validation.QueryValidator
 
-import anduin.graphql.codegen.{CodeGenerator, DocumentParser}
+import anduin.graphql.codegen.{CodeGenerator, DocumentParser, SourceFile}
 
 // scalastyle:off underscore.import
 import caseapp._
@@ -23,56 +22,97 @@ import cats.implicits._
 final case class CodegenBeforeCommand()
 
 sealed abstract class CodegenCommand extends Product with Serializable {
-  def run(args: RemainingArgs): Unit
+  def run(args: RemainingArgs): Result[Unit]
 }
 
 @CommandName("gen-ops")
 final case class GenerateOperations(
-  schema: String,
-  `package`: Option[String]
-) extends CodegenCommand {
+  @Name("s") schema: String,
+  @Name("p") `package`: Option[String],
+  @Name("o") out: Option[String]
+) extends CodegenCommand { self =>
 
-  private[this] def readDocument(path: String): Document = {
-    val either = for {
-      documentSource <- Either.catchNonFatal {
-        Source.fromFile(path).mkString
+  private[this] def outputStream(filename: String): Result[PrintStream] = {
+    out.fold[Result[PrintStream]](
+      Right(System.out)
+    ) { out =>
+      val dir = `package`.fold(out) { `package` =>
+        s"$out/${`package`.replace('.', File.separatorChar)}"
       }
 
-      document <- QueryParser.parse(documentSource)(DeliveryScheme.Either)
-    } yield document
+      val path = s"$dir${File.separator}$filename"
+      val file = new File(path)
 
-    either.right.get
-  }
+      file.getParentFile.mkdirs()
 
-  private[this] def readSchema(): Schema[_, _] = {
-    Schema.buildFromAst(readDocument(schema))
-  }
+      Either
+        .catchNonFatal(
+          new PrintStream(file)
+        )
+        .recoverWith {
+          case exception: FileNotFoundException =>
+            Left(
+              CodegenCliException(
+                s"File $path or one of its parent directory doesn't exist.",
+                exception
+              )
+            )
 
-  def run(args: RemainingArgs): Unit = {
-    val schema = readSchema()
-    val parser = new DocumentParser(schema)
-
-    args.args.foreach { documentPath =>
-      val document = readDocument(documentPath)
-      val violations = QueryValidator.default.validateQuery(schema, document)
-
-      if (violations.nonEmpty) {
-        violations.foreach { violation =>
-          sys.error(violation.errorMessage)
+          case exception: SecurityException =>
+            Left(CodegenCliException(s"Could not write to file $path.", exception))
         }
-
-        sys.exit(1)
-      }
-
-      val operations = parser.parse(document).right.get
-
-      operations.foreach { operation =>
-        val output = CodeGenerator
-          .generate(operation, `package`)
-          .show[Syntax]
-
-        println(output)
-      }
     }
+  }
+
+  def run(args: RemainingArgs): Result[Unit] = {
+    for {
+      schema <- DocumentReader.schemaFromGraphqlFile(new File(self.schema))
+      parser = new DocumentParser(schema)
+
+      _ <- args.args.toVector.foldLeftM[Result, Unit](()) { (_, path) =>
+        for {
+          document <- DocumentReader.fromGraphqlFile(new File(path))
+
+          _ <- {
+            val violations = QueryValidator.default.validateQuery(schema, document)
+
+            if (violations.nonEmpty) {
+              val aggregatedMessage = violations.map(_.errorMessage).mkString("\n\n")
+              Left(CodegenCliException(aggregatedMessage))
+            } else {
+              Right.apply(())
+            }
+          }
+
+          operations <- {
+            val sourceFile = SourceFile(new File(path).getAbsolutePath)
+
+            parser.parse(document, Some(sourceFile)).leftMap { exception =>
+              CodegenCliException(exception)
+            }
+          }
+
+          _ <- operations.foldLeftM[Result, Unit](()) { (_, operation) =>
+            // Remember to fix this hack later
+            val filenameSuffix = operation.operationType match {
+              case ast.OperationType.Query => "Query"
+              case ast.OperationType.Mutation => "Mutation"
+              case ast.OperationType.Subscription => "Subscription"
+            }
+
+            for {
+              outputStream <- self.outputStream(
+                s"${operation.name.capitalize}$filenameSuffix.scala"
+              )
+            } yield {
+              val ast = CodeGenerator.generate(operation, `package`)
+              val source = ast.show[Syntax]
+              outputStream.println(source)
+              outputStream.close()
+            }
+          }
+        } yield ()
+      }
+    } yield ()
   }
 }

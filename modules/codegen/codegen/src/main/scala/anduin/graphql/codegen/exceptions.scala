@@ -19,7 +19,14 @@ sealed abstract class CodegenException extends BaseException {
 }
 
 sealed abstract class CodegenUserException extends CodegenException {
-  final def message: String = s"[$lineString:$columnString] $details"
+
+  final def message: String = {
+    sourceFile.foldLeft(
+      s"Line $lineString, column $columnString: $details"
+    ) { (message, sourceFile) =>
+      s"File ${sourceFile.path}\n$message"
+    }
+  }
 }
 
 final case class OperationNotNamedException(
@@ -33,11 +40,15 @@ final case class OperationNotNamedException(
 sealed abstract class CodegenSystemException extends CodegenException {
 
   final def message: String = {
-    s"[$lineString:$columnString] $details" +
-      "\n\nThis is likely an error from the code generator itself" +
-      " which is not expected to happen." +
-      " Please include the stack trace and report the issue at" +
-      " https://github.com/anduintransaction/scala-graphql/issues"
+    sourceFile.foldLeft(
+      s"Line $lineString, column $columnString: $details" +
+        "\n\nThis is likely an error from the code generator itself" +
+        " which is not expected to happen." +
+        " Please include the stack trace and report the issue at" +
+        " https://github.com/anduintransaction/scala-graphql/issues"
+    ) { (message, sourceFile) =>
+      s"File ${sourceFile.path}\n$message"
+    }
   }
 }
 
