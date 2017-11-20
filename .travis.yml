@@ -30,3 +30,4 @@ script:
   - sbt ++$TRAVIS_SCALA_VERSION "reload plugins" scalafmt::test sbt:scalafmt::test
   - sbt ++$TRAVIS_SCALA_VERSION scalastyle test:scalastyle
   - sbt ++$TRAVIS_SCALA_VERSION test
+  - sbt scripted
