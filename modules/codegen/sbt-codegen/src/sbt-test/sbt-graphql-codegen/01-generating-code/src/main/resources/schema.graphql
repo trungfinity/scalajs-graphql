@@ -1,0 +1,13 @@
+type Name {
+  firstName: String!
+  lastName: String
+}
+
+type Query {
+  name: Name
+  age: Int
+}
+
+schema {
+  query: Query
+}

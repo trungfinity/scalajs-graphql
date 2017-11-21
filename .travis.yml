@@ -26,7 +26,8 @@ install:
   - nvm use stable
 
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION scalafmt::test test:scalafmt::test sbt:scalafmt::test
-  - sbt ++$TRAVIS_SCALA_VERSION "reload plugins" scalafmt::test sbt:scalafmt::test
-  - sbt ++$TRAVIS_SCALA_VERSION scalastyle test:scalastyle
+  - sbt scalafmt::test test:scalafmt::test sbt:scalafmt::test
+  - sbt "reload plugins" scalafmt::test sbt:scalafmt::test
+  - sbt scalastyle test:scalastyle
   - sbt ++$TRAVIS_SCALA_VERSION test
+  - sbt scripted

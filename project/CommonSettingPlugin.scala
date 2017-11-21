@@ -17,7 +17,6 @@ object CommonSettingPlugin extends AutoPlugin {
   import autoImport._ // scalastyle:ignore import.grouping underscore.import
 
   override lazy val projectSettings: Seq[Def.Setting[_]] = Seq(
-    scalaVersion := "2.12.4",
     libraryDependencies ++= Seq(
       Dependencies.ScalaTest.value
     ),
@@ -36,6 +35,9 @@ object CommonSettingPlugin extends AutoPlugin {
   )
 
   override lazy val buildSettings: Seq[Def.Setting[_]] = Seq(
+    organization := "com.anduintransact",
+    version := "0.1.0-SNAPSHOT",
+    scalaVersion := "2.12.4",
     scalafmtShowDiff in scalafmt := true
   )
 }

@@ -1,5 +1,8 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
+lazy val `scalajs-noton-core` = LocalProject("scalajs-noton-core")
+lazy val `scalajs-noton-generic` = LocalProject("scalajs-noton-generic")
+
 lazy val `graphql-codegen` = project
   .in(file("codegen"))
   .settings(
@@ -30,8 +33,35 @@ lazy val `graphql-codegen-cli` = project
 lazy val `sbt-graphql-codegen` = project
   .in(file("sbt-codegen"))
   .settings(
-    sbtPlugin := true
+    sbtPlugin := true,
+    scalaVersion := "2.10.7",
+    libraryDependencies ++= Seq(
+      Defaults.sbtPluginExtra(
+        Dependencies.Scalajs.value,
+        (sbtBinaryVersion in pluginCrossBuild).value,
+        (scalaBinaryVersion in pluginCrossBuild).value
+      )
+    ),
+    buildInfoKeys := Seq[BuildInfoKey](version),
+    buildInfoPackage := "anduin.graphql.codegen.sbt",
+    test := (),
+    publishLocal := publishLocal
+      .dependsOn(
+        // Hacky, why does this project have to know all transitive dependencies?
+        publishLocal in `graphql-codegen`,
+        publishLocal in `graphql-codegen-cli`,
+        publishLocal in `scalajs-noton-core`,
+        publishLocal in `scalajs-noton-generic`
+      )
+      .value,
+    scriptedSettings,
+    scriptedLaunchOpts ++= Seq(
+      "-Xmx1024M",
+      "-Dplugin.version=" + version.value
+    ),
+    scriptedBufferLog := false
   )
+  .enablePlugins(BuildInfoPlugin)
 
 lazy val codegen = project
   .in(file("."))

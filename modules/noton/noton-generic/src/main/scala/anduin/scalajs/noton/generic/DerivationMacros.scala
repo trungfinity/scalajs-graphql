@@ -93,8 +93,8 @@ final class DerivationMacros(val c: blackbox.Context) {
     }
   }
 
-  def decoder[T: c.WeakTypeTag]: c.Expr[Decoder[T]] = { // scalastyle:ignore method.length
-    val tpe = weakTypeOf[T]
+  def decoder[A: c.WeakTypeTag]: c.Expr[Decoder[A]] = { // scalastyle:ignore method.length
+    val tpe = weakTypeOf[A]
 
     membersFromPrimaryCtor(tpe).fold(
       c.abort(c.enclosingPosition, s"could not find the primary constructor of $tpe")
@@ -137,7 +137,7 @@ final class DerivationMacros(val c: blackbox.Context) {
             """
         }
 
-        c.Expr[Decoder[T]](
+        c.Expr[Decoder[A]](
           q"""
             _root_.anduin.scalajs.noton.Decoder.instance { any =>
               val dynamic = any.asInstanceOf[_root_.scala.scalajs.js.Dynamic]
