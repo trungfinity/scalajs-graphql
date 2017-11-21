@@ -38,12 +38,13 @@ lazy val `sbt-graphql-codegen` = project
     libraryDependencies ++= Seq(
       Defaults.sbtPluginExtra(
         Dependencies.Scalajs.value,
-        (sbtBinaryVersion in update).value,
-        (scalaBinaryVersion in update).value
+        (sbtBinaryVersion in pluginCrossBuild).value,
+        (scalaBinaryVersion in pluginCrossBuild).value
       )
     ),
     buildInfoKeys := Seq[BuildInfoKey](version),
     buildInfoPackage := "anduin.graphql.codegen.sbt",
+    test := (),
     publishLocal := publishLocal
       .dependsOn(
         // Hacky, why does this project have to know all transitive dependencies?
