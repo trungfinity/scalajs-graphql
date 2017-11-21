@@ -31,19 +31,19 @@ private[codegen] object CodeGenerator {
     schema.StringType
   )
 
-  private def generateFieldType(tpe: schema.Type)(innermostType: => Type): Type = {
+  private def generateType(tpe: schema.Type)(innermostType: => Type): Type = {
     tpe match {
       case schema.OptionType(innerTpe) =>
-        t"$OptionTypeName[${generateFieldType(innerTpe)(innermostType)}]"
+        t"$OptionTypeName[${generateType(innerTpe)(innermostType)}]"
 
       case schema.OptionInputType(innerTpe) =>
-        t"$OptionTypeName[${generateFieldType(innerTpe)(innermostType)}]"
+        t"$OptionTypeName[${generateType(innerTpe)(innermostType)}]"
 
       case schema.ListType(innerTpe) =>
-        t"$ListTypeName[${generateFieldType(innerTpe)(innermostType)}]"
+        t"$ListTypeName[${generateType(innerTpe)(innermostType)}]"
 
       case schema.ListInputType(innerTpe) =>
-        t"$ListTypeName[${generateFieldType(innerTpe)(innermostType)}]"
+        t"$ListTypeName[${generateType(innerTpe)(innermostType)}]"
 
       case schema.IDType =>
         Type.Name("ID")
@@ -53,8 +53,20 @@ private[codegen] object CodeGenerator {
     }
   }
 
+  private[this] def generateVariableType(variable: tree.Variable): Type = {
+    generateType(variable.tpe)(
+      Type.Name(variable.tpe.namedType.name)
+    )
+  }
+
+  private[this] def generateVariableParams(variables: List[tree.Variable]): List[Term.Param] = {
+    variables.map { variable =>
+      param"${Term.Name(variable.name)}: ${generateVariableType(variable)}"
+    }
+  }
+
   private[this] def generateFieldType(field: tree.Field, parentClassName: String): Type = {
-    generateFieldType(field.tpe)(
+    generateType(field.tpe)(
       field match {
         case _: tree.CompositeField =>
           Type.Name(s"$parentClassName.${field.name.capitalize}")
@@ -188,6 +200,10 @@ private[codegen] object CodeGenerator {
     packageName.foldLeft[Stat](
       q"""
         object ${Term.Name(s"${operation.name.capitalize}$classNameSuffix")} {
+          final case class Variables(
+            ..${generateVariableParams(operation.variables.toList)}
+          )
+
           ..${generateCompositeField(operation.underlyingField)}
         }
       """

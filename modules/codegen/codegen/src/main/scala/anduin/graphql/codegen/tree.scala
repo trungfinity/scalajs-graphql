@@ -14,7 +14,13 @@ private[codegen] object tree {
   final case class Operation(
     name: String,
     operationType: ast.OperationType,
+    variables: Vector[Variable],
     underlyingField: CompositeField
+  ) extends Tree
+
+  final case class Variable(
+    name: String,
+    tpe: Type
   ) extends Tree
 
   sealed abstract class Field extends Tree {

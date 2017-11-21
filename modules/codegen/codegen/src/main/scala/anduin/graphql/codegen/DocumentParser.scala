@@ -18,6 +18,26 @@ private[codegen] final class DocumentParser(
   private[this] val schemaTraversal = new SchemaTraversal(schema)
   private[this] val schemaLookup = new SchemaLookup(schema)
 
+  private[this] def parseVariable(
+    astVariable: ast.VariableDefinition
+  )(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[tree.Variable] = {
+    for {
+      tpe <- schemaLookup.findInputType(astVariable.tpe)
+    } yield tree.Variable(astVariable.name, tpe)
+  }
+
+  private[this] def parseVariables(
+    astVariables: Vector[ast.VariableDefinition]
+  )(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[Vector[tree.Variable]] = {
+    astVariables.foldMapM[Result, Vector[tree.Variable]] { astVariable =>
+      parseVariable(astVariable).map(Vector(_))
+    }
+  }
+
   private[this] def parseField(
     astField: ast.Field,
     possibleTypes: Set[ObjectType[_, _]],
@@ -144,7 +164,7 @@ private[codegen] final class DocumentParser(
     selections.foldMapM(parseSelection(_, possibleTypes, scope))
   }
 
-  private[this] def parseOperation(
+  private[this] def parseOperation( // scalastyle:ignore method.length
     astOperation: ast.OperationDefinition
   )(
     implicit document: ast.Document,
@@ -157,6 +177,8 @@ private[codegen] final class DocumentParser(
 
       operation <- schemaTraversal.scope(astOperation) {
         for {
+          variables <- parseVariables(astOperation.variables)
+
           objectType <- schemaTraversal.currentObjectType
           possibleTypes <- schemaLookup.findPossibleTypes(objectType, astOperation)
 
@@ -186,6 +208,7 @@ private[codegen] final class DocumentParser(
           tree.Operation(
             operationName,
             astOperation.operationType,
+            variables,
             underlyingField
           )
         }
@@ -193,15 +216,24 @@ private[codegen] final class DocumentParser(
     } yield operation
   }
 
+  private[this] def parseOperations(
+    astOperations: Vector[ast.OperationDefinition]
+  )(
+    implicit document: ast.Document,
+    sourceFile: Option[SourceFile]
+  ): Result[Vector[tree.Operation]] = {
+    astOperations
+      .foldMapM[Result, Vector[tree.Operation]] { operation =>
+        parseOperation(operation).map(Vector(_))
+      }
+      .map(_.sortBy(_.name))
+  }
+
   def parse(
     document: ast.Document,
     sourceFile: Option[SourceFile] = None
   ): Result[Vector[tree.Operation]] = {
-    document.operations.values.toVector
-      .foldMapM[Result, Vector[tree.Operation]] { operation =>
-        parseOperation(operation)(document, sourceFile).map(Vector(_))
-      }
-      .map(_.sortBy(_.name))
+    parseOperations(document.operations.values.toVector)(document, sourceFile)
   }
 }
 
