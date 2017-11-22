@@ -40,6 +40,7 @@ private[codegen] object TreePrinter {
   }
 
   private def printVariable(variable: tree.Variable, builder: StringBuilder): Unit = {
+    builder ++= "$"
     builder ++= variable.name
     builder ++= " -> "
     printType(variable.tpe, builder)
@@ -96,13 +97,7 @@ private[codegen] object TreePrinter {
     builder ++= operation.name
     builder ++= NewLine
 
-    builder ++= "---"
-    builder ++= NewLine
-
     operation.variables.foreach(printVariable(_, builder))
-
-    builder ++= "---"
-    builder ++= NewLine
 
     builder ++= (Space * (indentation + 2))
     printField(operation.underlyingField, builder, indentation + 2)
