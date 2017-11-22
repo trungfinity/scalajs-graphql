@@ -32,6 +32,14 @@ private[codegen] final class SchemaLookup(
     } yield compositeType: CompositeType[_]
   }
 
+  def findInputType(tpe: ast.Type)(
+    implicit sourceFile: Option[SourceFile]
+  ): Result[Type] = {
+    schema
+      .getInputType(tpe)
+      .toRight(InputTypeNotFoundException(tpe))
+  }
+
   def findPossibleTypes(
     tpe: CompositeType[_],
     node: ast.AstNode

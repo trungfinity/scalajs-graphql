@@ -31,5 +31,26 @@ final class CodeGeneratorSpec extends WordSpec with EitherValues {
         either.right.value
       }
     }
+
+    "do something better" in {
+      TestDataSupport.withTestData("03-variables") { (schema, readDocument) =>
+        val parser = new DocumentParser(schema)
+        val document = readDocument("person-by-name-query.graphql")
+
+        QueryValidator.default.validateQuery(schema, document).foreach { violation =>
+          println(violation.errorMessage)
+        }
+
+        val either = for {
+          operations <- parser.parse(document)
+        } yield {
+          operations.foreach { operation =>
+            println(CodeGenerator.generate(operation, Some("anduin.graphql.example")))
+          }
+        }
+
+        either.right.value
+      }
+    }
   }
 }

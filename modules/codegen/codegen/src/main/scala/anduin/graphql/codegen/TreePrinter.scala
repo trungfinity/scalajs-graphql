@@ -39,6 +39,14 @@ private[codegen] object TreePrinter {
     }
   }
 
+  private def printVariable(variable: tree.Variable, builder: StringBuilder): Unit = {
+    builder ++= "$"
+    builder ++= variable.name
+    builder ++= " -> "
+    printType(variable.tpe, builder)
+    builder ++= NewLine
+  }
+
   private def printField(
     field: tree.Field,
     builder: StringBuilder,
@@ -89,6 +97,8 @@ private[codegen] object TreePrinter {
     builder ++= operation.name
     builder ++= NewLine
 
+    operation.variables.foreach(printVariable(_, builder))
+
     builder ++= (Space * (indentation + 2))
     printField(operation.underlyingField, builder, indentation + 2)
   }
@@ -100,6 +110,7 @@ private[codegen] object TreePrinter {
 
     tree match {
       case operation: Operation => printOperation(operation, builder)
+      case variable: Variable => printVariable(variable, builder)
       case field: Field => printField(field, builder)
     }
 

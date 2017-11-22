@@ -1,0 +1,23 @@
+type Name {
+  firstName: String!
+  lastName: String
+}
+
+type Person {
+  name: Name
+  age: Int
+}
+
+input NameInput {
+  firstName: String!
+  lastName: String
+}
+
+type Query {
+  person(id: String!): Person
+  personByName(name: NameInput): [Person]
+}
+
+schema {
+  query: Query
+}

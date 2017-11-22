@@ -94,6 +94,13 @@ final case class TypeNotFoundException(namedType: ast.NamedType)(
   def details: String = s"""Cannot find a type with name "${namedType.name}"."""
 }
 
+final case class InputTypeNotFoundException(tpe: ast.Type)(
+  implicit val sourceFile: Option[SourceFile]
+) extends CodegenSystemException {
+  def position: Option[Position] = tpe.position
+  def details: String = s"""Cannot find an input type with name "${tpe.namedType.name}"."""
+}
+
 final case class FragmentNotFoundException(
   fragmentSpread: ast.FragmentSpread
 )(implicit val sourceFile: Option[SourceFile])

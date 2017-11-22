@@ -1,0 +1,9 @@
+query GetPersonByName($name: NameInput) {
+  personByName(name: $name) {
+    name {
+      firstName
+      lastName
+    }
+    age
+  }
+}
