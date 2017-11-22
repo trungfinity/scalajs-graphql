@@ -18,9 +18,7 @@ private[codegen] final class SchemaTraversal(
 
   private[this] val typeInfo = new TypeInfo(schema)
 
-  def scope[A](node: ast.AstNode)(action: => Result[A])(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[A] = {
+  def scope[A](node: ast.AstNode)(action: => Result[A]): Result[A] = {
     for {
       _ <- Right(typeInfo.enter(node))
       attempt <- action.attempt
@@ -29,24 +27,18 @@ private[codegen] final class SchemaTraversal(
     } yield result
   }
 
-  def currentNode(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[ast.AstNode] = {
-    typeInfo.ancestors.lastOption.toRight(EmptyNodeStackException())
+  def currentNode: Result[ast.AstNode] = {
+    typeInfo.ancestors.lastOption.toRight(EmptyNodeStackException)
   }
 
-  def currentType(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[Type] = {
+  def currentType: Result[Type] = {
     for {
       node <- currentNode
       tpe <- typeInfo.tpe.toRight(TypeNotAvailableException(node))
     } yield tpe
   }
 
-  def currentNamedType(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[Type with Named] = {
+  def currentNamedType: Result[Type with Named] = {
     for {
       node <- currentNode
       tpe <- currentType
@@ -58,8 +50,6 @@ private[codegen] final class SchemaTraversal(
 
   private[this] def specificCurrentType[A](
     filter: (ast.AstNode, Type) => Result[A]
-  )(
-    implicit sourceFile: Option[SourceFile]
   ): Result[A] = {
     for {
       node <- currentNode
@@ -68,9 +58,7 @@ private[codegen] final class SchemaTraversal(
     } yield specificType
   }
 
-  def currentCompositeType(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[CompositeType[_]] = {
+  def currentCompositeType: Result[CompositeType[_]] = {
     specificCurrentType { (node, tpe) =>
       tpe match {
         case compositeType: CompositeType[_] => Right(compositeType)
@@ -79,9 +67,7 @@ private[codegen] final class SchemaTraversal(
     }
   }
 
-  def currentObjectType(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[ObjectType[_, _]] = {
+  def currentObjectType: Result[ObjectType[_, _]] = {
     specificCurrentType { (node, tpe) =>
       tpe match {
         case objectType: ObjectType[_, _] => Right(objectType)

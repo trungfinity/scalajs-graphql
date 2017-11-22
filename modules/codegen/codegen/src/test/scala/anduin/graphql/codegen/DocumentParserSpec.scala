@@ -22,11 +22,10 @@ final class DocumentParserSpec extends WordSpec with Matchers with EitherValues 
         run { queryFilename =>
           { queryDebugString =>
             s"""parse queries in "$queryFilename" correctly""" in {
-              val sourceFile = SourceFile(queryFilename)
               val document = readDocument(queryFilename)
 
               val either = for {
-                operations <- parser.parse(document, Some(sourceFile))
+                operations <- parser.parse(document)
               } yield {
                 operations.map(TreePrinter.print).mkString("\n\n") should be(queryDebugString)
               }

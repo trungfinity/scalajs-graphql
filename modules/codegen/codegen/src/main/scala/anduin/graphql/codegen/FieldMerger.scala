@@ -10,11 +10,7 @@ import cats.implicits._
 
 private[codegen] object FieldMerger {
 
-  private[this] def mergeSameNameFields(
-    fields: NonEmptyVector[tree.Field]
-  )(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[tree.Field] = {
+  private[this] def mergeSameNameFields(fields: NonEmptyVector[tree.Field]): Result[tree.Field] = {
     fields.head match {
       case singleField: tree.SingleField =>
         fields.tail.foldLeftM[Result, tree.SingleField] {
@@ -45,11 +41,7 @@ private[codegen] object FieldMerger {
     }
   }
 
-  private[this] def mergeFields(
-    fields: Vector[tree.Field]
-  )(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[Vector[tree.Field]] = {
+  private[this] def mergeFields(fields: Vector[tree.Field]): Result[Vector[tree.Field]] = {
     fields
       .groupBy(_.name)
       .values
@@ -62,9 +54,7 @@ private[codegen] object FieldMerger {
       .map(_.sortBy(_.name))
   }
 
-  def merge(field: tree.CompositeField)(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[tree.CompositeField] = {
+  def merge(field: tree.CompositeField): Result[tree.CompositeField] = {
     // Three equirements:
     // 1. Duplicate sub-fields must be deeply merged
     // 2. Sub-types must have all fields from the base type

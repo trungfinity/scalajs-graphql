@@ -20,8 +20,6 @@ private[codegen] final class DocumentParser(
 
   private[this] def parseVariable(
     astVariable: ast.VariableDefinition
-  )(
-    implicit sourceFile: Option[SourceFile]
   ): Result[tree.Variable] = {
     for {
       tpe <- schemaLookup.findInputType(astVariable.tpe)
@@ -30,8 +28,6 @@ private[codegen] final class DocumentParser(
 
   private[this] def parseVariables(
     astVariables: Vector[ast.VariableDefinition]
-  )(
-    implicit sourceFile: Option[SourceFile]
   ): Result[Vector[tree.Variable]] = {
     astVariables.foldMapM[Result, Vector[tree.Variable]] { astVariable =>
       parseVariable(astVariable).map(Vector(_))
@@ -44,7 +40,6 @@ private[codegen] final class DocumentParser(
     scope: SelectionScope
   )(
     implicit document: ast.Document,
-    sourceFile: Option[SourceFile]
   ): Result[tree.Fields] = {
     for {
       fieldType <- schemaTraversal.currentType
@@ -80,8 +75,7 @@ private[codegen] final class DocumentParser(
     possibleTypes: Set[ObjectType[_, _]],
     scope: SelectionScope
   )(
-    implicit document: ast.Document,
-    sourceFile: Option[SourceFile]
+    implicit document: ast.Document
   ): Result[tree.Fields] = {
     for {
       fragment <- document.fragments
@@ -108,8 +102,7 @@ private[codegen] final class DocumentParser(
     possibleTypes: Set[ObjectType[_, _]],
     scope: SelectionScope
   )(
-    implicit document: ast.Document,
-    sourceFile: Option[SourceFile]
+    implicit document: ast.Document
   ): Result[tree.Fields] = {
     for {
       narrowedPossibleTypes <- inlineFragment.typeCondition match {
@@ -136,8 +129,7 @@ private[codegen] final class DocumentParser(
     possibleTypes: Set[ObjectType[_, _]],
     scope: SelectionScope
   )(
-    implicit document: ast.Document,
-    sourceFile: Option[SourceFile]
+    implicit document: ast.Document
   ): Result[tree.Fields] = {
     schemaTraversal.scope(selection) {
       selection match {
@@ -158,8 +150,7 @@ private[codegen] final class DocumentParser(
     possibleTypes: Set[ObjectType[_, _]],
     scope: SelectionScope
   )(
-    implicit document: ast.Document,
-    sourceFile: Option[SourceFile]
+    implicit document: ast.Document
   ): Result[tree.Fields] = {
     selections.foldMapM(parseSelection(_, possibleTypes, scope))
   }
@@ -167,8 +158,7 @@ private[codegen] final class DocumentParser(
   private[this] def parseOperation( // scalastyle:ignore method.length
     astOperation: ast.OperationDefinition
   )(
-    implicit document: ast.Document,
-    sourceFile: Option[SourceFile]
+    implicit document: ast.Document
   ): Result[tree.Operation] = {
     for {
       operationName <- astOperation.name.toRight {
@@ -219,8 +209,7 @@ private[codegen] final class DocumentParser(
   private[this] def parseOperations(
     astOperations: Vector[ast.OperationDefinition]
   )(
-    implicit document: ast.Document,
-    sourceFile: Option[SourceFile]
+    implicit document: ast.Document
   ): Result[Vector[tree.Operation]] = {
     astOperations
       .foldMapM[Result, Vector[tree.Operation]] { operation =>
@@ -229,11 +218,8 @@ private[codegen] final class DocumentParser(
       .map(_.sortBy(_.name))
   }
 
-  def parse(
-    document: ast.Document,
-    sourceFile: Option[SourceFile] = None
-  ): Result[Vector[tree.Operation]] = {
-    parseOperations(document.operations.values.toVector)(document, sourceFile)
+  def parse(document: ast.Document): Result[Vector[tree.Operation]] = {
+    parseOperations(document.operations.values.toVector)(document)
   }
 }
 

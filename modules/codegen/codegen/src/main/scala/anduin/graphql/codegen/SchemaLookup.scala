@@ -12,17 +12,13 @@ private[codegen] final class SchemaLookup(
   schema: Schema[_, _]
 ) {
 
-  def findType(namedType: ast.NamedType)(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[Type] = {
+  def findType(namedType: ast.NamedType): Result[Type] = {
     schema.allTypes
       .get(namedType.name)
       .toRight(TypeNotFoundException(namedType))
   }
 
-  def findCompositeType(namedType: ast.NamedType)(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[CompositeType[_]] = {
+  def findCompositeType(namedType: ast.NamedType): Result[CompositeType[_]] = {
     for {
       tpe <- findType(namedType)
       compositeType <- tpe match {
@@ -32,9 +28,7 @@ private[codegen] final class SchemaLookup(
     } yield compositeType: CompositeType[_]
   }
 
-  def findInputType(tpe: ast.Type)(
-    implicit sourceFile: Option[SourceFile]
-  ): Result[Type] = {
+  def findInputType(tpe: ast.Type): Result[Type] = {
     schema
       .getInputType(tpe)
       .toRight(InputTypeNotFoundException(tpe))
@@ -43,8 +37,6 @@ private[codegen] final class SchemaLookup(
   def findPossibleTypes(
     tpe: CompositeType[_],
     node: ast.AstNode
-  )(
-    implicit sourceFile: Option[SourceFile]
   ): Result[Set[ObjectType[_, _]]] = {
     tpe match {
       case abstractType: AbstractType =>
@@ -62,8 +54,6 @@ private[codegen] final class SchemaLookup(
     possibleTypes: Set[ObjectType[_, _]],
     typeCondition: CompositeType[_],
     namedType: ast.NamedType
-  )(
-    implicit sourceFile: Option[SourceFile]
   ): Result[Set[ObjectType[_, _]]] = {
     findPossibleTypes(typeCondition, namedType).map(_.intersect(possibleTypes))
   }

@@ -9,7 +9,7 @@ import scala.meta.prettyprinters.Syntax
 import sangria.ast
 import sangria.validation.QueryValidator
 
-import anduin.graphql.codegen.{CodeGenerator, DocumentParser, SourceFile}
+import anduin.graphql.codegen.{CodeGenerator, DocumentParser}
 
 // scalastyle:off underscore.import
 import caseapp._
@@ -85,9 +85,7 @@ final case class GenerateOperations(
           }
 
           operations <- {
-            val sourceFile = SourceFile(new File(path).getAbsolutePath)
-
-            parser.parse(document, Some(sourceFile)).leftMap { exception =>
+            parser.parse(document).leftMap { exception =>
               CodegenCliException(exception)
             }
           }
