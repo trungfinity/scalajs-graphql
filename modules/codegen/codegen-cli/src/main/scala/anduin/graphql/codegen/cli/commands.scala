@@ -9,7 +9,8 @@ import scala.meta.prettyprinters.Syntax
 import sangria.ast
 import sangria.validation.QueryValidator
 
-import anduin.graphql.codegen.{CodeGenerator, DocumentParser}
+import anduin.graphql.codegen.CodeGenerator
+import anduin.graphql.codegen.parse.DocumentParser
 
 // scalastyle:off underscore.import
 import caseapp._

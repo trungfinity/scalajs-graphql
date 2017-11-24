@@ -2,12 +2,14 @@
 
 package anduin.graphql.codegen.cli
 
-import anduin.exception.BaseException
-
 final case class CodegenCliException(
   message: String,
-  override val cause: Throwable = null // scalastyle:ignore null
-) extends BaseException
+  cause: Throwable = null // scalastyle:ignore null
+) extends Exception {
+  override def getMessage: String = message
+  override def getCause: Throwable = cause
+  override def fillInStackTrace(): Throwable = this
+}
 
 object CodegenCliException {
 
