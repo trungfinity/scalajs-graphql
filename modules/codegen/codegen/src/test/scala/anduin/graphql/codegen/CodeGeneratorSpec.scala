@@ -5,6 +5,7 @@ package anduin.graphql.codegen
 import org.scalatest.{EitherValues, WordSpec}
 import sangria.validation.QueryValidator
 
+import anduin.graphql.codegen.parse.DocumentParser
 import anduin.graphql.test.TestDataSupport
 
 final class CodeGeneratorSpec extends WordSpec with EitherValues {

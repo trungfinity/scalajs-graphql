@@ -1,9 +1,10 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-package anduin.graphql.codegen
+package anduin.graphql.codegen.parse
 
 import org.scalatest.{EitherValues, Matchers, WordSpec}
 
+import anduin.graphql.codegen.TreePrinter
 import anduin.graphql.test.TestDataSupport
 
 // scalastyle:off underscore.import

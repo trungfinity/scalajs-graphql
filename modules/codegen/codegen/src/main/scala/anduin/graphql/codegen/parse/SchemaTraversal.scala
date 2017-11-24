@@ -1,6 +1,6 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-package anduin.graphql.codegen
+package anduin.graphql.codegen.parse
 
 import scala.util.Try
 
@@ -12,7 +12,7 @@ import cats.implicits._
 import sangria.schema._
 // scalastyle:on underscore.import
 
-private[codegen] final class SchemaTraversal(
+private[parse] final class SchemaTraversal(
   schema: Schema[_, _]
 ) {
 

@@ -1,14 +1,16 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-package anduin.graphql.codegen
+package anduin.graphql.codegen.parse
 
 import cats.data.NonEmptyVector
+
+import anduin.graphql.codegen.tree
 
 // scalastyle:off underscore.import
 import cats.implicits._
 // scalastyle:on underscore.import
 
-private[codegen] object FieldMerger {
+private[parse] object FieldMerger {
 
   private[this] def mergeSameNameFields(fields: NonEmptyVector[tree.Field]): Result[tree.Field] = {
     fields.head match {

@@ -1,8 +1,10 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-package anduin.graphql.codegen
+package anduin.graphql.codegen.parse
 
 import sangria.ast
+
+import anduin.graphql.codegen.tree
 
 // scalastyle:off underscore.import
 import cats.implicits._
@@ -162,7 +164,7 @@ private[codegen] final class DocumentParser(
   ): Result[tree.Operation] = {
     for {
       operationName <- astOperation.name.toRight {
-        OperationNotNamedException(astOperation)
+        OperationNotNamedError(astOperation)
       }
 
       operation <- schemaTraversal.scope(astOperation) {
