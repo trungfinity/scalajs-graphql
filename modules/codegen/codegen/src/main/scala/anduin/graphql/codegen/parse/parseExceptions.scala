@@ -6,7 +6,7 @@ import sangria.{ast, schema}
 
 import anduin.graphql.codegen.tree
 
-private[codegen] sealed abstract class CodegenException extends RuntimeException {
+private[codegen] sealed abstract class ParseException extends RuntimeException {
   def message: String
   def cause: Throwable = null // scalastyle:ignore null
   final override def getMessage: String = message
@@ -14,15 +14,12 @@ private[codegen] sealed abstract class CodegenException extends RuntimeException
   final override def fillInStackTrace(): Throwable = this
 }
 
-private[codegen] sealed abstract class ParseError extends CodegenException
-
-private[codegen] final case class OperationNotNamedError(
-  operation: ast.OperationDefinition
-) extends ParseError {
-  def message: String = "Operation must be named."
+private[codegen] final case class UserErrorException(
+  error: ParseError
+) extends ParseException {
+  def message: String = "There is a user error in the parse input."
+  override def cause: Throwable = error
 }
-
-private[codegen] sealed abstract class ParseException extends CodegenException
 
 private[codegen] case object EmptyNodeStackException extends ParseException {
   def message: String = "AST node stack is empty."

@@ -84,7 +84,7 @@ private[codegen] final class DocumentParser(
         .get(fragmentSpread.name)
         .toRight(FragmentNotFoundException(fragmentSpread))
 
-      fields <- schemaTraversal.scope(fragment) {
+      fields <- schemaTraversal.scope[Result](fragment) {
         for {
           typeCondition <- schemaLookup.findCompositeType(fragment.typeCondition)
           narrowedPossibleTypes <- schemaLookup.narrowPossibleTypes(
@@ -133,7 +133,7 @@ private[codegen] final class DocumentParser(
   )(
     implicit document: ast.Document
   ): Result[tree.Fields] = {
-    schemaTraversal.scope(selection) {
+    schemaTraversal.scope[Result](selection) {
       selection match {
         case field: ast.Field =>
           parseField(field, possibleTypes, scope)
@@ -163,11 +163,11 @@ private[codegen] final class DocumentParser(
     implicit document: ast.Document
   ): Result[tree.Operation] = {
     for {
-      operationName <- astOperation.name.toRight {
-        OperationNotNamedError(astOperation)
-      }
+      operationName <- astOperation.name.toRight(
+        UserErrorException(OperationNotNamedError(astOperation))
+      )
 
-      operation <- schemaTraversal.scope(astOperation) {
+      operation <- schemaTraversal.scope[Result](astOperation) {
         for {
           variables <- parseVariables(astOperation.variables)
 

@@ -2,8 +2,10 @@
 
 package anduin.graphql.codegen.parse
 
+import scala.language.higherKinds
 import scala.util.Try
 
+import cats.MonadError
 import sangria.ast
 import sangria.validation.TypeInfo
 
@@ -18,13 +20,22 @@ private[parse] final class SchemaTraversal(
 
   private[this] val typeInfo = new TypeInfo(schema)
 
-  def scope[A](node: ast.AstNode)(action: => Result[A]): Result[A] = {
-    for {
-      _ <- Right(typeInfo.enter(node))
-      attempt <- action.attempt
-      _ = typeInfo.leave(node)
-      result <- attempt
-    } yield result
+  private[parse] final class ScopePartiallyApplied[F[_]](val node: ast.AstNode) {
+
+    def apply[A](action: => F[A])(
+      implicit error: MonadError[F, ParseException]
+    ): F[A] = {
+      for {
+        _ <- error.pure(typeInfo.enter(node))
+        attempt <- error.attempt(action)
+        _ = typeInfo.leave(node)
+        result <- error.fromEither(attempt)
+      } yield result
+    }
+  }
+
+  def scope[F[_]](node: ast.AstNode): ScopePartiallyApplied[F] = {
+    new ScopePartiallyApplied(node)
   }
 
   def currentNode: Result[ast.AstNode] = {
