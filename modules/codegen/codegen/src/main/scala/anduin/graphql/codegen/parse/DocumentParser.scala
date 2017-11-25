@@ -56,9 +56,7 @@ private[codegen] final class DocumentParser(
               fieldPossibleTypes,
               SelectionScope(fieldCompositeType, fieldPossibleTypes)
             )
-          } yield {
-            tree.CompositeField(astField, subfields, fieldCompositeType, fieldPossibleTypes)
-          }
+          } yield tree.CompositeField(astField, subfields, fieldCompositeType, fieldPossibleTypes)
 
         case _ =>
           Right(tree.SingleField(astField, fieldType))
@@ -84,7 +82,7 @@ private[codegen] final class DocumentParser(
         .get(fragmentSpread.name)
         .toRight(FragmentNotFoundException(fragmentSpread))
 
-      fields <- schemaTraversal.scope[Result](fragment) {
+      fields <- schemaTraversal.scope[Result](fragment)(
         for {
           typeCondition <- schemaLookup.findCompositeType(fragment.typeCondition)
           narrowedPossibleTypes <- schemaLookup.narrowPossibleTypes(
@@ -95,7 +93,7 @@ private[codegen] final class DocumentParser(
 
           fields <- parseSelections(fragment.selections, narrowedPossibleTypes, scope)
         } yield fields
-      }
+      )
     } yield fields
   }
 
@@ -133,7 +131,7 @@ private[codegen] final class DocumentParser(
   )(
     implicit document: ast.Document
   ): Result[tree.Fields] = {
-    schemaTraversal.scope[Result](selection) {
+    schemaTraversal.scope[Result](selection)(
       selection match {
         case field: ast.Field =>
           parseField(field, possibleTypes, scope)
@@ -144,7 +142,7 @@ private[codegen] final class DocumentParser(
         case inlineFragment: ast.InlineFragment =>
           parseInlineFragment(inlineFragment, possibleTypes, scope)
       }
-    }
+    )
   }
 
   private[this] def parseSelections(
@@ -167,7 +165,7 @@ private[codegen] final class DocumentParser(
         UserErrorException(OperationNotNamedError(astOperation))
       )
 
-      operation <- schemaTraversal.scope[Result](astOperation) {
+      operation <- schemaTraversal.scope[Result](astOperation)(
         for {
           variables <- parseVariables(astOperation.variables)
 
@@ -204,7 +202,7 @@ private[codegen] final class DocumentParser(
             underlyingField
           )
         }
-      }
+      )
     } yield operation
   }
 
@@ -214,8 +212,8 @@ private[codegen] final class DocumentParser(
     implicit document: ast.Document
   ): Result[Vector[tree.Operation]] = {
     astOperations
-      .foldMapM[Result, Vector[tree.Operation]] { operation =>
-        parseOperation(operation).map(Vector(_))
+      .foldMapM[Result, Vector[tree.Operation]] {
+        parseOperation(_).map(Vector(_))
       }
       .map(_.sortBy(_.name))
   }

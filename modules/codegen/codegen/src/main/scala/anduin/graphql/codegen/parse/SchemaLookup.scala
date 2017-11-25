@@ -28,7 +28,7 @@ private[parse] final class SchemaLookup(
     } yield compositeType: CompositeType[_]
   }
 
-  def findInputType(tpe: ast.Type): Result[Type] = {
+  def findInputType(tpe: ast.Type): Result[InputType[_]] = {
     schema
       .getInputType(tpe)
       .toRight(InputTypeNotFoundException(tpe))
