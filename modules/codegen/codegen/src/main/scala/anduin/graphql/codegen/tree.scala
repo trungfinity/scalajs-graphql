@@ -43,4 +43,12 @@ private[codegen] object tree {
     def baseTypeFields: Vector[Field] = subfields.getOrElse(tpe, Vector.empty)
     def subtypeFields: Fields = subfields.filterKeys(_ != tpe)
   }
+
+  final case class Fragment(
+    name: String
+  ) extends Tree
+
+  final case class InputType(
+    name: String
+  ) extends Tree
 }
