@@ -41,7 +41,7 @@ private[codegen] final class DocumentParser(
     possibleTypes: Set[ObjectType[_, _]],
     scope: SelectionScope
   )(
-    implicit document: ast.Document,
+    implicit document: ast.Document
   ): Result[tree.Fields] = {
     for {
       fieldType <- schemaTraversal.currentType
