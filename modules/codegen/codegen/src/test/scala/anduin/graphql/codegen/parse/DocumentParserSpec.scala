@@ -46,20 +46,20 @@ final class DocumentParserSpec extends WordSpec with Matchers with EitherValues 
     withTestData("01-simplest-data") { validateQueries =>
       validateQueries("name-query.graphql")(
         """Query GetName
-          |  data
-          |    Query: name
-          |      Name: firstName -> String
-          |      Name: lastName -> Option of String
+          |  Query
+          |    name
+          |      firstName -> String
+          |      lastName -> Option of String
           |""".stripMargin
       )
 
       validateQueries("name-and-age-query.graphql")(
         """Query GetNameAndAge
-          |  data
-          |    Query: age -> Option of Int
-          |    Query: name
-          |      Name: firstName -> String
-          |      Name: lastName -> Option of String
+          |  Query
+          |    age -> Option of Int
+          |    name
+          |      firstName -> String
+          |      lastName -> Option of String
           |""".stripMargin
       )
     }

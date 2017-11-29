@@ -3,6 +3,7 @@
 package anduin.graphql.codegen.parse
 
 import cats.data.NonEmptyVector
+import sangria.schema.ObjectType
 
 import anduin.graphql.codegen.tree
 
@@ -12,7 +13,9 @@ import cats.implicits._
 
 private[parse] object FieldMerger {
 
-  private[this] def mergeSameNameFields(fields: NonEmptyVector[tree.Field]): Result[tree.Field] = {
+  private[this] def mergeSameNameFields(
+    fields: NonEmptyVector[tree.Field]
+  ): Result[tree.Field] = {
     fields.head match {
       case singleField: tree.SingleField =>
         fields.tail.foldLeftM[Result, tree.SingleField] {
@@ -33,8 +36,11 @@ private[parse] object FieldMerger {
         } { (mergedField, field) =>
           field match {
             case compositeField: tree.CompositeField if compositeField.tpe == mergedField.tpe =>
-              val mergedSubfields = mergedField.subfields.combine(compositeField.subfields)
-              merge(mergedField.copy(subfields = mergedSubfields))
+              merge(
+                mergedField.copy(
+                  subfields = mergedField.subfields.combine(compositeField.subfields)
+                )
+              )
 
             case _ =>
               Left(ConflictedFieldsException(mergedField, field))
@@ -57,20 +63,25 @@ private[parse] object FieldMerger {
   }
 
   def merge(field: tree.CompositeField): Result[tree.CompositeField] = {
-    // Three equirements:
+    // Three requirements:
     // 1. Duplicate sub-fields must be deeply merged
-    // 2. Sub-types must have all fields from the base type
+    // 2. Projection fields must contain all base fields
     // 3. Fields must be listed in alphabetical order
 
     for {
-      baseTypeFields <- mergeFields(field.baseTypeFields)
-      subtypeFields <- field.subtypeFields.toVector.foldMapM[Result, tree.Fields] {
-        case (subtype, fields) =>
-          mergeFields(fields).map(fields => Map(subtype -> fields))
-      }
+      baseFields <- mergeFields(field.subfields.base)
+      projectionFields <- field.subfields.projections.toVector
+        .foldMapM[Result, Map[ObjectType[_, _], Vector[tree.Field]]] {
+          case (projection, fields) =>
+            mergeFields(fields).map(fields => Map(projection -> fields))
+        }
     } yield {
-      val subfields = Map(field.tpe -> baseTypeFields) ++ subtypeFields
-      field.copy(subfields = subfields)
+      field.copy(
+        subfields = field.subfields.copy(
+          base = baseFields,
+          projections = projectionFields
+        )
+      )
     }
   }
 }

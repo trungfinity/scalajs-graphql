@@ -42,30 +42,40 @@ private[codegen] final class DocumentParser(
     scope: SelectionScope
   )(
     implicit document: ast.Document
-  ): Result[tree.Fields] = {
+  ): Result[tree.Subfields] = {
     for {
-      fieldType <- schemaTraversal.currentType
-      fieldNamedType <- schemaTraversal.currentNamedType
+      fieldType <- schemaTraversal.currentOutputType
+      fieldNamedType <- schemaTraversal.currentOutputNamedType
 
       field <- fieldNamedType match {
-        case fieldCompositeType: CompositeType[_] =>
+        case fieldNamedType: CompositeType[_] with OutputType[_] =>
           for {
-            fieldPossibleTypes <- schemaLookup.findPossibleTypes(fieldCompositeType, astField)
-            subfields <- parseSelections(
+            fieldPossibleTypes <- schemaLookup.findPossibleTypes(fieldNamedType, astField)
+            fieldSubfields <- parseSelections(
               astField.selections,
               fieldPossibleTypes,
-              SelectionScope(fieldCompositeType, fieldPossibleTypes)
+              SelectionScope(fieldNamedType, fieldPossibleTypes)
             )
-          } yield tree.CompositeField(astField, subfields, fieldCompositeType, fieldPossibleTypes)
+          } yield {
+            tree.CompositeField(
+              astField.name,
+              fieldType,
+              fieldSubfields,
+              fieldPossibleTypes.toVector
+            )
+          }
 
-        case _ =>
-          Right(tree.SingleField(astField, fieldType))
+        case _: OutputType[_] =>
+          Right(tree.SingleField(astField.name, fieldType))
       }
     } yield {
       if (possibleTypes >= scope.possibleTypes) {
-        Map(scope.tpe -> Vector(field))
+        tree.Subfields(Vector(field), Map.empty)
       } else {
-        possibleTypes.map(_ -> Vector(field)).toMap
+        tree.Subfields(
+          Vector.empty,
+          possibleTypes.map(_ -> Vector(field)).toMap
+        )
       }
     }
   }
@@ -76,7 +86,7 @@ private[codegen] final class DocumentParser(
     scope: SelectionScope
   )(
     implicit document: ast.Document
-  ): Result[tree.Fields] = {
+  ): Result[tree.Subfields] = {
     for {
       fragment <- document.fragments
         .get(fragmentSpread.name)
@@ -103,7 +113,7 @@ private[codegen] final class DocumentParser(
     scope: SelectionScope
   )(
     implicit document: ast.Document
-  ): Result[tree.Fields] = {
+  ): Result[tree.Subfields] = {
     for {
       narrowedPossibleTypes <- inlineFragment.typeCondition match {
         case Some(namedType) =>
@@ -130,7 +140,7 @@ private[codegen] final class DocumentParser(
     scope: SelectionScope
   )(
     implicit document: ast.Document
-  ): Result[tree.Fields] = {
+  ): Result[tree.Subfields] = {
     schemaTraversal.scope[Result](selection)(
       selection match {
         case field: ast.Field =>
@@ -151,7 +161,7 @@ private[codegen] final class DocumentParser(
     scope: SelectionScope
   )(
     implicit document: ast.Document
-  ): Result[tree.Fields] = {
+  ): Result[tree.Subfields] = {
     selections.foldMapM(parseSelection(_, possibleTypes, scope))
   }
 
@@ -169,31 +179,23 @@ private[codegen] final class DocumentParser(
         for {
           variables <- parseVariables(astOperation.variables)
 
-          objectType <- schemaTraversal.currentObjectType
-          possibleTypes <- schemaLookup.findPossibleTypes(objectType, astOperation)
+          tpe <- schemaTraversal.currentObjectType
+          possibleTypes <- schemaLookup.findPossibleTypes(tpe, astOperation)
 
           subfields <- parseSelections(
             astOperation.selections,
             possibleTypes,
-            SelectionScope(objectType, possibleTypes)
+            SelectionScope(tpe, possibleTypes)
           )
 
-          underlyingField <- {
-            // Create a dummy field node for this operation
-            // In particular this pattern should be eliminated
-            val node = ast.Field(
-              alias = None,
-              name = "data",
-              arguments = Vector.empty,
-              directives = astOperation.directives,
-              selections = astOperation.selections,
-              comments = astOperation.comments,
-              trailingComments = astOperation.trailingComments,
-              position = astOperation.position
+          underlyingField <- FieldMerger.merge(
+            tree.CompositeField(
+              tpe.name,
+              tpe,
+              subfields,
+              possibleTypes.toVector
             )
-
-            FieldMerger.merge(tree.CompositeField(node, subfields, objectType, possibleTypes))
-          }
+          )
         } yield {
           tree.Operation(
             operationName,
@@ -226,7 +228,7 @@ private[codegen] final class DocumentParser(
 private[codegen] object DocumentParser {
 
   private final case class SelectionScope(
-    tpe: CompositeType[_],
+    tpe: CompositeType[_] with OutputType[_],
     possibleTypes: Set[ObjectType[_, _]]
   )
 }

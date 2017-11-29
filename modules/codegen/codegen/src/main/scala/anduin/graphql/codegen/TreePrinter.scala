@@ -15,21 +15,21 @@ private[codegen] object TreePrinter {
 
   private def printType(tpe: Type, builder: StringBuilder): Unit = {
     tpe match {
-      case OptionType(innerTpe) =>
+      case OptionType(inner) =>
         builder ++= "Option of "
-        printType(innerTpe, builder)
+        printType(inner, builder)
 
-      case OptionInputType(innerTpe) =>
+      case OptionInputType(inner) =>
         builder ++= "Option of "
-        printType(innerTpe, builder)
+        printType(inner, builder)
 
-      case ListType(innerTpe) =>
+      case ListType(inner) =>
         builder ++= "List of "
-        printType(innerTpe, builder)
+        printType(inner, builder)
 
-      case ListInputType(innerTpe) =>
+      case ListInputType(inner) =>
         builder ++= "List of "
-        printType(innerTpe, builder)
+        printType(inner, builder)
 
       case IDType =>
         builder ++= "ID"
@@ -67,11 +67,16 @@ private[codegen] object TreePrinter {
   }
 
   private def printSubFields(
-    fields: tree.Fields,
+    subfields: tree.Subfields,
     builder: StringBuilder,
     indentation: Int = 0
   ): Unit = {
-    fields.foreach {
+    subfields.base.foreach { field =>
+      builder ++= (Space * indentation)
+      printField(field, builder, indentation)
+    }
+
+    subfields.projections.foreach {
       case (container, fieldsByContainer) =>
         fieldsByContainer.foreach { field =>
           builder ++= (Space * indentation)

@@ -59,27 +59,35 @@ private[parse] final class SchemaTraversal(
     } yield namedType
   }
 
-  private[this] def specificCurrentType[A](
+  private[this] def specificType[A](
+    getType: => Result[Type]
+  )(
     filter: (ast.AstNode, Type) => Result[A]
   ): Result[A] = {
     for {
       node <- currentNode
-      tpe <- currentType
+      tpe <- getType
       specificType <- filter(node, tpe)
     } yield specificType
   }
 
-  def currentCompositeType: Result[CompositeType[_]] = {
-    specificCurrentType { (node, tpe) =>
-      tpe match {
-        case compositeType: CompositeType[_] => Right(compositeType)
-        case _ => Left(UnexpectedTypeException(tpe, classOf[CompositeType[_]], node))
-      }
+  private[this] def filterOutputType(node: ast.AstNode, tpe: Type): Result[OutputType[_]] = {
+    tpe match {
+      case outputType: OutputType[_] => Right(outputType)
+      case _ => Left(UnexpectedTypeException(tpe, classOf[OutputType[_]], node))
     }
   }
 
+  def currentOutputType: Result[OutputType[_]] = {
+    specificType(currentType)(filterOutputType)
+  }
+
+  def currentOutputNamedType: Result[OutputType[_]] = {
+    specificType(currentNamedType)(filterOutputType)
+  }
+
   def currentObjectType: Result[ObjectType[_, _]] = {
-    specificCurrentType { (node, tpe) =>
+    specificType(currentType) { (node, tpe) =>
       tpe match {
         case objectType: ObjectType[_, _] => Right(objectType)
         case _ => Left(UnexpectedTypeException(tpe, classOf[ObjectType[_, _]], node))

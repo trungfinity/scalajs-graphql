@@ -2,53 +2,66 @@
 
 package anduin.graphql.codegen
 
-import sangria.ast
-import sangria.schema.{CompositeType, ObjectType, Type}
+import cats.kernel.Monoid
+import sangria.ast.OperationType
+import sangria.schema.{InputType, ObjectType, OutputType}
 
-private[codegen] object tree {
+// scalastyle:off underscore.import
+import cats.implicits._
+// scalastyle:on underscore.import
 
-  type Fields = Map[CompositeType[_], Vector[Field]]
+object tree {
 
-  sealed abstract class Tree extends Product with Serializable
-
-  final case class Operation(
-    name: String,
-    operationType: ast.OperationType,
-    variables: Vector[Variable],
-    underlyingField: CompositeField
-  ) extends Tree
+  sealed trait Tree extends Product with Serializable
 
   final case class Variable(
     name: String,
-    tpe: Type
+    tpe: InputType[_]
   ) extends Tree
 
-  sealed abstract class Field extends Tree {
-    def name: String = node.name
-    def node: ast.Field
-    def tpe: Type
+  sealed trait Field extends Tree {
+    def name: String
+    def tpe: OutputType[_]
   }
 
   final case class SingleField(
-    node: ast.Field,
-    tpe: Type
+    name: String,
+    tpe: OutputType[_]
   ) extends Field
 
-  final case class CompositeField(
-    node: ast.Field,
-    subfields: Fields,
-    tpe: CompositeType[_],
-    possibleTypes: Set[ObjectType[_, _]]
-  ) extends Field {
-    def baseTypeFields: Vector[Field] = subfields.getOrElse(tpe, Vector.empty)
-    def subtypeFields: Fields = subfields.filterKeys(_ != tpe)
+  final case class Subfields(
+    base: Vector[Field],
+    projections: Map[ObjectType[_, _], Vector[Field]]
+  )
+
+  object Subfields {
+
+    implicit val subfieldsMonoid: Monoid[Subfields] = new Monoid[Subfields] {
+
+      final def empty: Subfields = {
+        Subfields(base = Vector.empty, projections = Map.empty)
+      }
+
+      final def combine(x: Subfields, y: Subfields): Subfields = {
+        Subfields(
+          base = x.base.combine(y.base),
+          projections = x.projections.combine(y.projections)
+        )
+      }
+    }
   }
 
-  final case class Fragment(
-    name: String
-  ) extends Tree
+  final case class CompositeField(
+    name: String,
+    tpe: OutputType[_],
+    subfields: Subfields,
+    possibleTypes: Vector[ObjectType[_, _]]
+  ) extends Field
 
-  final case class InputType(
-    name: String
+  final case class Operation(
+    name: String,
+    operationType: OperationType,
+    variables: Vector[Variable],
+    underlyingField: CompositeField
   ) extends Tree
 }

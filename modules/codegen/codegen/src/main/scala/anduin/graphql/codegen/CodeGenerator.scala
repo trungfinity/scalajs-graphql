@@ -4,7 +4,8 @@ package anduin.graphql.codegen
 
 import sangria.{ast, schema}
 import sangria.introspection.TypeNameMetaField
-import sangria.schema.ObjectType
+
+import anduin.graphql.codegen.tree.Subfields
 
 // scalastyle:off underscore.import
 import scala.meta._
@@ -21,13 +22,7 @@ private[codegen] object CodeGenerator {
   private val SetTypeName = Type.Name("_root_.scala.collection.immutable.Set")
 
   private val TypenameField = tree.SingleField(
-    ast.Field(
-      alias = None,
-      name = TypeNameMetaField.name,
-      arguments = Vector.empty,
-      directives = Vector.empty,
-      selections = Vector.empty
-    ),
+    TypeNameMetaField.name,
     schema.StringType
   )
 
@@ -99,33 +94,35 @@ private[codegen] object CodeGenerator {
   private[this] def generateCompositeField( // scalastyle:ignore method.length
     field: tree.CompositeField
   ): List[Stat] = {
+    val subfields = field.subfields
+
     val className = field.name.capitalize
     val classTypeName = Type.Name(className)
 
-    val baseTypeFields = if (field.subtypeFields.nonEmpty) {
-      field.baseTypeFields.toList :+ TypenameField
+    val baseFields = if (subfields.projections.nonEmpty) {
+      subfields.base.toList :+ TypenameField
     } else {
-      field.baseTypeFields.toList
+      subfields.base.toList
     }
 
-    val subtypeFields = field.subtypeFields.toList
-    val projectionMethods = subtypeFields.map {
-      case (typeCondition, subfields) =>
-        val projectionClassName = typeCondition.name.capitalize
-        val projectionFullName = s"$className.$projectionClassName"
-        val projectionTermName = Term.Name(projectionFullName)
-        val projectionReturningType = t"$OptionTypeName[${Type.Name(projectionFullName)}]"
+    val projectionFields = subfields.projections.toList
+    val projectionMethods = projectionFields.map {
+      case (typeCondition, fields) =>
+        val className = typeCondition.name.capitalize
+        val fullName = s"$className.$className"
+        val termName = Term.Name(fullName)
+        val returningType = t"$OptionTypeName[${Type.Name(fullName)}]"
 
-        val subfieldParams = subfields.toList.map { field =>
+        val params = fields.toList.map { field =>
           Term.Name(field.name)
         }
 
         q"""
-          def ${Term.Name(s"as$projectionClassName")}: $projectionReturningType = {
+          def ${Term.Name(s"as$className")}: $returningType = {
             val typename = any.asInstanceOf[_root_.scala.scalajs.js.Dynamic].__typename
 
-            if ($projectionTermName.possibleTypes.contains(typename)) {
-              _root_.scala.Some($projectionTermName(..$subfieldParams))
+            if ($termName.possibleTypes.contains(typename)) {
+              _root_.scala.Some($termName(..$params))
             } else {
               _root_.scala.None
             }
@@ -135,7 +132,7 @@ private[codegen] object CodeGenerator {
 
     val clazz = q"""
       final case class $classTypeName (
-        ..${generateSubfieldParams(baseTypeFields, className)}
+        ..${generateSubfieldParams(baseFields, className)}
       )(any: _root_.scala.scalajs.js.Any) {
         ..$projectionMethods
       }
@@ -145,30 +142,14 @@ private[codegen] object CodeGenerator {
       Lit.String(possibleType.name)
     }
 
-    val projectionTypes = subtypeFields.flatMap {
-      case (typeCondition, subfields) =>
-        // Two hacks are used here:
-        // 1. A dummy node is created.
-        val node = ast.Field(
-          alias = None,
-          // Field names are usually in lowercase, however here we use
-          // type condition class name directly, which is capitalized.
-          name = typeCondition.name,
-          arguments = Vector.empty,
-          directives = Vector.empty,
-          selections = Vector.empty
-        )
-
-        // 2. Possible types here are decided based on an assumption that
-        //    all subtypes must be ObjectType[_, _]. That assumption is true
-        //    but the implementation may change in the future. In particular,
-        //    code generator should not know about parsing implementation details.
+    val projectionTypes = projectionFields.flatMap {
+      case (typeCondition, fields) =>
         generateCompositeField(
           tree.CompositeField(
-            node,
-            Map(typeCondition -> subfields),
+            typeCondition.name,
             typeCondition,
-            Set(typeCondition.asInstanceOf[ObjectType[_, _]]) // scalastyle:ignore token
+            Subfields(fields, Map.empty),
+            Vector(typeCondition)
           )
         )
     }
@@ -182,7 +163,7 @@ private[codegen] object CodeGenerator {
         implicit val decoder: _root_.anduin.scalajs.noton.Decoder[$classTypeName] =
           _root_.anduin.scalajs.noton.generic.deriveDecoder[$classTypeName]
 
-        ..${generateSubfieldTypes(baseTypeFields)}
+        ..${generateSubfieldTypes(baseFields)}
         ..$projectionTypes
       }
     """
@@ -197,6 +178,8 @@ private[codegen] object CodeGenerator {
       case ast.OperationType.Subscription => "Subscription"
     }
 
+    val rootField = operation.underlyingField.copy(name = "data")
+
     packageName.foldLeft[Stat](
       q"""
         object ${Term.Name(s"${operation.name.capitalize}$classNameSuffix")} {
@@ -204,7 +187,7 @@ private[codegen] object CodeGenerator {
             ..${generateVariableParams(operation.variables.toList)}
           )
 
-          ..${generateCompositeField(operation.underlyingField)}
+          ..${generateCompositeField(rootField)}
         }
       """
     ) { (`object`, packageName) =>
