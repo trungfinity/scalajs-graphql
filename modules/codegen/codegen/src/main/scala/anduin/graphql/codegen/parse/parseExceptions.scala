@@ -33,18 +33,32 @@ private[codegen] final case class TypeNotAvailableException(
 
 private[codegen] final case class NamedTypeNotAvailableException(
   tpe: schema.Type,
-  node: ast.AstNode,
+  node: Option[ast.AstNode],
   override val cause: Throwable
 ) extends ParseException {
-  def message: String = s"AST node $node has type $tpe, expected to contain a named type."
+
+  def message: String = {
+    node.fold(
+      s"$tpe is expected to contain a named type."
+    ) { node =>
+      s"AST node $node has type $tpe, expected to contain a named type."
+    }
+  }
 }
 
 private[codegen] final case class UnexpectedTypeException(
   tpe: schema.Type,
-  expectedType: Class[_ <: schema.Type],
-  node: ast.AstNode
+  expectedType: Class[_],
+  node: Option[ast.AstNode]
 ) extends ParseException {
-  def message: String = s"AST node $node has type $tpe, but expected $expectedType."
+
+  def message: String = {
+    node.fold(
+      s"$tpe is expected to be $expectedType."
+    ) { node =>
+      s"AST node $node has type $tpe, but expected $expectedType."
+    }
+  }
 }
 
 private[codegen] final case class TypeNotFoundException(

@@ -26,8 +26,9 @@ final class DocumentParserSpec extends WordSpec with Matchers with EitherValues 
               val document = readDocument(queryFilename)
 
               val either = for {
-                operations <- parser.parse(document)
+                result <- parser.parse(document).run(ParseState.Empty)
               } yield {
+                val (_, operations) = result
                 operations.map(TreePrinter.print).mkString("\n\n") should be(queryDebugString)
               }
 

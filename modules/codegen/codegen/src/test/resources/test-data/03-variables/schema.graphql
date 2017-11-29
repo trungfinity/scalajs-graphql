@@ -8,8 +8,12 @@ type Person {
   age: Int
 }
 
+input FirstNameInput {
+  value: String!
+}
+
 input NameInput {
-  firstName: String!
+  firstName: FirstNameInput!
   lastName: String
 }
 

@@ -3,7 +3,6 @@
 package anduin.graphql.codegen.parse
 
 import scala.language.higherKinds
-import scala.util.Try
 
 import cats.MonadError
 import sangria.ast
@@ -53,45 +52,31 @@ private[parse] final class SchemaTraversal(
     for {
       node <- currentNode
       tpe <- currentType
-      namedType <- Try(tpe.namedType).toEither.left.map {
-        NamedTypeNotAvailableException(tpe, node, _)
-      }
+      namedType <- Typecaster.namedType(tpe, Some(node))
     } yield namedType
   }
 
   private[this] def specificType[A](
-    getType: => Result[Type]
+    getNamedType: Boolean
   )(
-    filter: (ast.AstNode, Type) => Result[A]
+    filter: (Type, Option[ast.AstNode]) => Result[A]
   ): Result[A] = {
     for {
       node <- currentNode
-      tpe <- getType
-      specificType <- filter(node, tpe)
+      tpe <- if (getNamedType) currentNamedType else currentType
+      specificType <- filter(tpe, Some(node))
     } yield specificType
   }
 
-  private[this] def filterOutputType(node: ast.AstNode, tpe: Type): Result[OutputType[_]] = {
-    tpe match {
-      case outputType: OutputType[_] => Right(outputType)
-      case _ => Left(UnexpectedTypeException(tpe, classOf[OutputType[_]], node))
-    }
-  }
-
   def currentOutputType: Result[OutputType[_]] = {
-    specificType(currentType)(filterOutputType)
+    specificType(getNamedType = false)(Typecaster.outputType)
   }
 
   def currentOutputNamedType: Result[OutputType[_]] = {
-    specificType(currentNamedType)(filterOutputType)
+    specificType(getNamedType = true)(Typecaster.outputType)
   }
 
   def currentObjectType: Result[ObjectType[_, _]] = {
-    specificType(currentType) { (node, tpe) =>
-      tpe match {
-        case objectType: ObjectType[_, _] => Right(objectType)
-        case _ => Left(UnexpectedTypeException(tpe, classOf[ObjectType[_, _]], node))
-      }
-    }
+    specificType(getNamedType = false)(Typecaster.objectType)
   }
 }

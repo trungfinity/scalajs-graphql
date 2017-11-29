@@ -21,10 +21,7 @@ private[parse] final class SchemaLookup(
   def findCompositeType(namedType: ast.NamedType): Result[CompositeType[_]] = {
     for {
       tpe <- findType(namedType)
-      compositeType <- tpe match {
-        case compositeType: CompositeType[_] => Right(compositeType)
-        case _ => Left(UnexpectedTypeException(tpe, classOf[CompositeType[_]], namedType))
-      }
+      compositeType <- Typecaster.compositeType(tpe, Some(namedType))
     } yield compositeType: CompositeType[_]
   }
 

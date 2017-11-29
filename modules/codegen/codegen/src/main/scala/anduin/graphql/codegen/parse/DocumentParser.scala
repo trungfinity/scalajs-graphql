@@ -2,6 +2,7 @@
 
 package anduin.graphql.codegen.parse
 
+import cats.data.StateT
 import sangria.ast
 
 import anduin.graphql.codegen.tree
@@ -20,18 +21,62 @@ private[codegen] final class DocumentParser(
   private[this] val schemaTraversal = new SchemaTraversal(schema)
   private[this] val schemaLookup = new SchemaLookup(schema)
 
-  private[this] def parseVariable(
-    astVariable: ast.VariableDefinition
-  ): Result[tree.Variable] = {
+  private[this] def parseInputType(tpe: InputType[_]): Result.WithState[Unit] = {
     for {
-      tpe <- schemaLookup.findInputType(astVariable.tpe)
-    } yield tree.Variable(astVariable.name, tpe)
+      namedType <- StateT.lift(Typecaster.namedType(tpe, node = None))
+      inputNamedType <- StateT.lift(
+        Typecaster
+          .inputType(namedType, node = None)
+          .map(_.asInstanceOf[InputType[_] with Named]) // scalastyle:ignore token
+      )
+
+      _ <- StateT[Result, ParseState, Unit] { state =>
+        def modified(modifiedState: ParseState) = Right((modifiedState, ()))
+        lazy val ignored = modified(state)
+
+        if (!state.inputNamedTypes.contains(inputNamedType)) {
+          inputNamedType match {
+            case _: ScalarType[_] | _: ScalarAlias[_, _] =>
+              ignored
+
+            case enumType: EnumType[_] =>
+              modified(state.copy(inputNamedTypes = state.inputNamedTypes + enumType))
+
+            case _: ListInputType[_] | _: OptionInputType[_] =>
+              Left(UnexpectedTypeException(inputNamedType, classOf[Named], node = None))
+
+            case inputObjectType: InputObjectType[_] =>
+              val modifiedState = state.copy(
+                inputNamedTypes = state.inputNamedTypes + inputObjectType
+              )
+
+              inputObjectType.fields
+                .traverse[Result.WithState, Unit] { field =>
+                  parseInputType(field.fieldType)
+                }
+                .void
+                .run(modifiedState)
+          }
+        } else {
+          ignored
+        }
+      }
+    } yield ()
+  }
+
+  private[this] def parseVariable(
+    variable: ast.VariableDefinition
+  ): Result.WithState[tree.Variable] = {
+    for {
+      tpe <- StateT.lift(schemaLookup.findInputType(variable.tpe))
+      _ <- parseInputType(tpe)
+    } yield tree.Variable(variable.name, tpe)
   }
 
   private[this] def parseVariables(
     astVariables: Vector[ast.VariableDefinition]
-  ): Result[Vector[tree.Variable]] = {
-    astVariables.foldMapM[Result, Vector[tree.Variable]] { astVariable =>
+  ): Result.WithState[Vector[tree.Variable]] = {
+    astVariables.foldMapM[Result.WithState, Vector[tree.Variable]] { astVariable =>
       parseVariable(astVariable).map(Vector(_))
     }
   }
@@ -48,7 +93,7 @@ private[codegen] final class DocumentParser(
       fieldNamedType <- schemaTraversal.currentOutputNamedType
 
       field <- fieldNamedType match {
-        case fieldNamedType: CompositeType[_] with OutputType[_] =>
+        case fieldNamedType: CompositeType[_] =>
           for {
             fieldPossibleTypes <- schemaLookup.findPossibleTypes(fieldNamedType, astField)
             fieldSubfields <- parseSelections(
@@ -169,31 +214,37 @@ private[codegen] final class DocumentParser(
     astOperation: ast.OperationDefinition
   )(
     implicit document: ast.Document
-  ): Result[tree.Operation] = {
+  ): Result.WithState[tree.Operation] = {
     for {
-      operationName <- astOperation.name.toRight(
-        UserErrorException(OperationNotNamedError(astOperation))
+      operationName <- StateT.lift(
+        astOperation.name.toRight(
+          UserErrorException(OperationNotNamedError(astOperation))
+        ): Result[String]
       )
 
-      operation <- schemaTraversal.scope[Result](astOperation)(
+      operation <- schemaTraversal.scope[Result.WithState](astOperation)(
         for {
           variables <- parseVariables(astOperation.variables)
 
-          tpe <- schemaTraversal.currentObjectType
-          possibleTypes <- schemaLookup.findPossibleTypes(tpe, astOperation)
+          tpe <- StateT.lift(schemaTraversal.currentObjectType)
+          possibleTypes <- StateT.lift(schemaLookup.findPossibleTypes(tpe, astOperation))
 
-          subfields <- parseSelections(
-            astOperation.selections,
-            possibleTypes,
-            SelectionScope(tpe, possibleTypes)
+          subfields <- StateT.lift(
+            parseSelections(
+              astOperation.selections,
+              possibleTypes,
+              SelectionScope(tpe, possibleTypes)
+            )
           )
 
-          underlyingField <- FieldMerger.merge(
-            tree.CompositeField(
-              tpe.name,
-              tpe,
-              subfields,
-              possibleTypes.toVector
+          underlyingField <- StateT.lift[Result, ParseState, tree.CompositeField](
+            FieldMerger.merge(
+              tree.CompositeField(
+                tpe.name,
+                tpe,
+                subfields,
+                possibleTypes.toVector
+              )
             )
           )
         } yield {
@@ -212,15 +263,15 @@ private[codegen] final class DocumentParser(
     astOperations: Vector[ast.OperationDefinition]
   )(
     implicit document: ast.Document
-  ): Result[Vector[tree.Operation]] = {
+  ): Result.WithState[Vector[tree.Operation]] = {
     astOperations
-      .foldMapM[Result, Vector[tree.Operation]] {
+      .foldMapM[Result.WithState, Vector[tree.Operation]] {
         parseOperation(_).map(Vector(_))
       }
       .map(_.sortBy(_.name))
   }
 
-  def parse(document: ast.Document): Result[Vector[tree.Operation]] = {
+  def parse(document: ast.Document): Result.WithState[Vector[tree.Operation]] = {
     parseOperations(document.operations.values.toVector)(document)
   }
 }
@@ -228,7 +279,7 @@ private[codegen] final class DocumentParser(
 private[codegen] object DocumentParser {
 
   private final case class SelectionScope(
-    tpe: CompositeType[_] with OutputType[_],
+    tpe: CompositeType[_],
     possibleTypes: Set[ObjectType[_, _]]
   )
 }
