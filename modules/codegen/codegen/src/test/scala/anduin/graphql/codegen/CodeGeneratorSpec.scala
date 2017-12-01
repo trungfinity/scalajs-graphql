@@ -52,7 +52,10 @@ final class CodeGeneratorSpec extends WordSpec with Matchers with EitherValues {
           result <- parser.parse(document).run(ParseState.Empty)
         } yield {
           val (state, operations) = result
-          val inputTypeNames = state.inputNamedTypes.map(_.name)
+          val inputTypeNames = state.inputTypes.map {
+            case Left(enumType) => enumType.name
+            case Right(inputObjectType) => inputObjectType.name
+          }
 
           inputTypeNames should contain("NameInput")
           inputTypeNames should contain("FirstNameInput")

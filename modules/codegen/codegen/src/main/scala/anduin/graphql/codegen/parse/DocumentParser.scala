@@ -24,30 +24,31 @@ private[codegen] final class DocumentParser(
   private[this] def parseInputType(tpe: InputType[_]): Result.WithState[Unit] = {
     for {
       namedType <- StateT.lift(Typecaster.namedType(tpe, node = None))
-      inputNamedType <- StateT.lift(
-        Typecaster
-          .inputType(namedType, node = None)
-          .map(_.asInstanceOf[InputType[_] with Named]) // scalastyle:ignore token
-      )
+      inputNamedType <- StateT.lift(Typecaster.inputType(namedType, node = None))
 
       _ <- StateT[Result, ParseState, Unit] { state =>
         def modified(modifiedState: ParseState) = Right((modifiedState, ()))
         lazy val ignored = modified(state)
 
-        if (!state.inputNamedTypes.contains(inputNamedType)) {
+        val encountered = state.inputTypes.exists {
+          case Left(enumType) => enumType == inputNamedType
+          case Right(inputObjectType) => inputObjectType == inputNamedType
+        }
+
+        if (!encountered) {
           inputNamedType match {
             case _: ScalarType[_] | _: ScalarAlias[_, _] =>
               ignored
 
             case enumType: EnumType[_] =>
-              modified(state.copy(inputNamedTypes = state.inputNamedTypes + enumType))
+              modified(state.copy(inputTypes = state.inputTypes + Left(enumType)))
 
             case _: ListInputType[_] | _: OptionInputType[_] =>
               Left(UnexpectedTypeException(inputNamedType, classOf[Named], node = None))
 
             case inputObjectType: InputObjectType[_] =>
               val modifiedState = state.copy(
-                inputNamedTypes = state.inputNamedTypes + inputObjectType
+                inputTypes = state.inputTypes + Right(inputObjectType)
               )
 
               inputObjectType.fields
