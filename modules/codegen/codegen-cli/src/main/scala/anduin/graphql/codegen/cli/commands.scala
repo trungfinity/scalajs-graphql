@@ -65,7 +65,9 @@ final case class GenerateOperations(
     }
   }
 
-  def run(args: RemainingArgs): Result[Unit] = {
+  def run( // scalastyle:ignore method.length cyclomatic.complexity
+    args: RemainingArgs
+  ): Result[Unit] = {
     for {
       schema <- DocumentReader.schemaFromGraphqlFile(new File(self.schema))
       parser = new DocumentParser(schema)
@@ -85,11 +87,38 @@ final case class GenerateOperations(
             }
           }
 
-          operations <- parser
+          stateAndOperations <- parser
             .parse(document)
             .run(ParseState.Empty)
             .leftMap(CodegenCliException.apply)
-            .map { case (_, operations) => operations }
+
+          (state, operations) = stateAndOperations
+
+          _ <- state.inputTypes.toVector.traverse[Result, Unit] { inputType =>
+            val typeName = inputType match {
+              case Left(enumType) => enumType.name
+              case Right(inputObjectType) => inputObjectType.name
+            }
+
+            for {
+              outputStream <- self.outputStream(
+                s"${typeName.capitalize}.scala"
+              )
+            } yield {
+              val ast = inputType match {
+                case Left(enumType) =>
+                  CodeGenerator.generateEnumType(enumType, `package`)
+
+                case Right(inputObjectType) =>
+                  CodeGenerator.generateInputObjectType(inputObjectType, `package`)
+              }
+
+              val source = ast.show[Syntax]
+
+              outputStream.println(source)
+              outputStream.close()
+            }
+          }
 
           _ <- operations.foldLeftM[Result, Unit](()) { (_, operation) =>
             // Remember to fix this hack later
@@ -104,7 +133,7 @@ final case class GenerateOperations(
                 s"${operation.name.capitalize}$filenameSuffix.scala"
               )
             } yield {
-              val ast = CodeGenerator.generate(operation, `package`)
+              val ast = CodeGenerator.generateOperation(operation, `package`)
               val source = ast.show[Syntax]
               outputStream.println(source)
               outputStream.close()
