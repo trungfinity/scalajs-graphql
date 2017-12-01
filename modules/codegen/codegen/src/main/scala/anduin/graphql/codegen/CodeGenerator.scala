@@ -41,7 +41,7 @@ private[codegen] object CodeGenerator {
         t"$ListTypeName[${generateType(innerTpe)(innermostType)}]"
 
       case schema.IDType =>
-        Type.Name("ID")
+        Type.Name("String")
 
       case _ =>
         innermostType
