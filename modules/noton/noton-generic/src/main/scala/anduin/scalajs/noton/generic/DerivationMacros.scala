@@ -26,30 +26,45 @@ final class DerivationMacros(val c: blackbox.Context) {
     }
   }
 
-  private[this] def membersFromPrimaryCtor(tpe: Type): Option[(List[Member], RawMember)] = {
-    def fail(): Nothing = {
-      c.abort(
-        c.enclosingPosition,
-        "expect the second parameter list to contain exactly one scala.scalajs.js.Any member"
-      )
-    }
-
+  private[this] def membersFromPrimaryCtor(
+    tpe: Type,
+    rawRequired: Boolean
+  ): Option[(List[Member], Option[RawMember])] = {
     tpe.decls.collectFirst {
       case primaryCtor: MethodSymbol if primaryCtor.isPrimaryConstructor =>
         val paramLists = primaryCtor.paramLists
-
-        if (paramLists.size <= 1 || paramLists.tail.head.size <= 0) {
-          fail()
-        }
-
         val members = membersFromParamList(paramLists.head, tpe)
-        val rawMember = membersFromParamList(paramLists.tail.head, tpe).head
 
-        if (!(rawMember.tpe =:= jsAnyType)) {
-          fail()
+        val rawMember = if (rawRequired) {
+          if (paramLists.size <= 1) {
+            c.abort(
+              c.enclosingPosition,
+              "the second parameter list doesn't exist"
+            )
+          }
+
+          if (paramLists.tail.head.size != 1) {
+            c.abort(
+              c.enclosingPosition,
+              "the second parameter list must have exactly one parameter"
+            )
+          }
+
+          val member = membersFromParamList(paramLists.tail.head, tpe).head
+
+          if (!(member.tpe =:= jsAnyType)) {
+            c.abort(
+              c.enclosingPosition,
+              "the only parameter of the second parameter list must be an scala.scalajs.js.Any"
+            )
+          }
+
+          Some(RawMember(member.name, member.decodedName))
+        } else {
+          None
         }
 
-        (members, RawMember(rawMember.name, rawMember.decodedName))
+        (members, rawMember)
     }
   }
 
@@ -96,7 +111,7 @@ final class DerivationMacros(val c: blackbox.Context) {
   def encoder[A: c.WeakTypeTag]: c.Expr[Encoder[A]] = {
     val tpe = weakTypeOf[A]
 
-    membersFromPrimaryCtor(tpe).fold(
+    membersFromPrimaryCtor(tpe, rawRequired = false).fold(
       c.abort(c.enclosingPosition, s"could not find the primary constructor of $tpe")
     ) {
       case (members, _) =>
@@ -132,7 +147,7 @@ final class DerivationMacros(val c: blackbox.Context) {
   def decoder[A: c.WeakTypeTag]: c.Expr[Decoder[A]] = { // scalastyle:ignore method.length
     val tpe = weakTypeOf[A]
 
-    membersFromPrimaryCtor(tpe).fold(
+    membersFromPrimaryCtor(tpe, rawRequired = true).fold(
       c.abort(c.enclosingPosition, s"could not find the primary constructor of $tpe")
     ) {
       case (members, _) =>

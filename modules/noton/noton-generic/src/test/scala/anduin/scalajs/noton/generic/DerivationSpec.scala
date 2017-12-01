@@ -18,11 +18,15 @@ final class DerivationSpec extends FlatSpec with Matchers {
   private[this] val helloJS = js.Dynamic.literal("a" -> 122, "b" -> "hello")
   private[this] val hello = Hello(122, "hello")(helloJS) // scalastyle:ignore magic.number
 
+  private[this] final case class Something(x: Int)
+  private[this] val something = Something(30) // scalastyle:ignore magic.number
+
   behavior of "Encoder derivation"
 
   it should "derive encoders correctly" in {
     js.JSON.stringify(deriveEncoder[Foo](foo)) should be("{}")
     js.JSON.stringify(deriveEncoder[Hello](hello)) should be("""{"a":122,"b":"hello"}""")
+    js.JSON.stringify(deriveEncoder[Something](something)) should be("""{"x":30}""")
   }
 
   behavior of "Decoder derivation"
