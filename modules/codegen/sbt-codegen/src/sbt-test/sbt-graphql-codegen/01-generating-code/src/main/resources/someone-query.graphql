@@ -1,0 +1,9 @@
+query GetSomeoneNameAndAge {
+  someone {
+    name {
+      firstName { value }
+      lastName
+    }
+    age
+  }
+}

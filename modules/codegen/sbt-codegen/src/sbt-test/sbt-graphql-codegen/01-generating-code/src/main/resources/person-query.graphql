@@ -1,0 +1,9 @@
+query GetPerson($id: String!) {
+  person(id: $id) {
+    name {
+      firstName { value }
+      lastName
+    }
+    age
+  }
+}

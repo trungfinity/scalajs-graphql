@@ -1,11 +1,38 @@
+type FirstName {
+  value: String!
+}
+
 type Name {
-  firstName: String!
+  firstName: FirstName!
   lastName: String
 }
 
-type Query {
+input FirstNameInput {
+  value: String!
+}
+
+input NameInput {
+  firstName: FirstNameInput!
+  lastName: String
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+type Person {
   name: Name
+  gender: Gender
   age: Int
+}
+
+type Query {
+  someone: Person
+  person(id: String!): Person
+  personByName(name: NameInput!): Person
+  peopleByGender(gender: Gender!): [Person]
 }
 
 schema {
