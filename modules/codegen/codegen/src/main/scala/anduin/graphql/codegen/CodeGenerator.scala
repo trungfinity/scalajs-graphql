@@ -60,6 +60,26 @@ private[codegen] object CodeGenerator {
     }
   }
 
+  private[this] def generateVariables(variables: List[tree.Variable]): List[Stat] = {
+    if (variables.nonEmpty) {
+      List(
+        q"""
+          final case class Variables(
+            ..${generateVariableParams(variables)}
+          )
+        """,
+        q"""
+          object Variables {
+            implicit val encoder: _root_.anduin.scalajs.noton.Encoder[Variables] =
+              _root_.anduin.scalajs.noton.generic.deriveEncoder[Variables]
+          }
+        """
+      )
+    } else {
+      List.empty
+    }
+  }
+
   private[this] def generateFieldType(field: tree.Field, parentClassName: String): Type = {
     generateType(field.tpe)(
       field match {
@@ -183,10 +203,7 @@ private[codegen] object CodeGenerator {
     packageName.foldLeft[Stat](
       q"""
         object ${Term.Name(s"${operation.name.capitalize}$classNameSuffix")} {
-          final case class Variables(
-            ..${generateVariableParams(operation.variables.toList)}
-          )
-
+          ..${generateVariables(operation.variables.toList)}
           ..${generateCompositeField(rootField)}
         }
       """
