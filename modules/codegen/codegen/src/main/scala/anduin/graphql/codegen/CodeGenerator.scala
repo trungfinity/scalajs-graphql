@@ -19,12 +19,31 @@ private[codegen] object CodeGenerator {
   private val OptionTypeName = Type.Name("_root_.scala.Option")
 
   private val SetTermName = Term.Name("_root_.scala.collection.immutable.Set")
-  private val SetTypeName = Type.Name("_root_.scala.collection.immutable.Set")
+  private val SetTypeName = Type.Name(SetTermName.value)
+
+  private val EncoderTermName = Term.Name("_root_.anduin.scalajs.noton.Encoder")
+  private val EncoderTypeName = Type.Name(EncoderTermName.value)
+  private val DecoderTermName = Term.Name("_root_.anduin.scalajs.noton.Decoder")
+  private val DecoderTypeName = Type.Name(DecoderTermName.value)
 
   private val TypenameField = tree.SingleField(
     TypeNameMetaField.name,
     schema.StringType
   )
+
+  private def generateSource(stats: List[Stat], packageName: Option[String]): Source = {
+    packageName.foldLeft[Source](
+      Source(stats)
+    ) { (source, packageName) =>
+      val stat = q"""
+        package ${Term.Name(packageName)} {
+          ..${source.stats}
+        }
+      """
+
+      Source(List(stat))
+    }
+  }
 
   private def generateType(tpe: schema.Type)(innermostType: => Type): Type = {
     tpe match {
@@ -48,36 +67,8 @@ private[codegen] object CodeGenerator {
     }
   }
 
-  private def generateVariableType(variable: tree.Variable): Type = {
-    generateType(variable.tpe)(
-      Type.Name(variable.tpe.namedType.name)
-    )
-  }
-
-  private def generateVariableParams(variables: List[tree.Variable]): List[Term.Param] = {
-    variables.map { variable =>
-      param"${Term.Name(variable.name)}: ${generateVariableType(variable)}"
-    }
-  }
-
-  private def generateVariables(variables: List[tree.Variable]): List[Stat] = {
-    if (variables.nonEmpty) {
-      List(
-        q"""
-          final case class Variables(
-            ..${generateVariableParams(variables)}
-          )
-        """,
-        q"""
-          object Variables {
-            implicit val encoder: _root_.anduin.scalajs.noton.Encoder[Variables] =
-              _root_.anduin.scalajs.noton.generic.deriveEncoder[Variables]
-          }
-        """
-      )
-    } else {
-      List.empty
-    }
+  private def generateInputType(tpe: schema.Type): Type = {
+    generateType(tpe)(Type.Name(tpe.namedType.name))
   }
 
   private def generateFieldType(field: tree.Field, parentClassName: String): Type = {
@@ -92,12 +83,97 @@ private[codegen] object CodeGenerator {
     )
   }
 
-  private def generateSubfieldParams(
-    fields: List[tree.Field],
-    parentClassName: String
-  ): List[Term.Param] = {
-    fields.map { field =>
-      param"${Term.Name(field.name)}: ${generateFieldType(field, parentClassName)}"
+  def generateEnumType[A](
+    tpe: schema.EnumType[A],
+    packageName: Option[String] = None
+  ): Source = {
+    val typeName = Type.Name(tpe.name)
+
+    val valueTermNames = tpe.values.map(value => Term.Name(value.name))
+    val valueClasses: List[Stat] = tpe.values.map { value =>
+      q"""
+        case object ${Term.Name(value.name)} extends {
+          val value: String = ${Lit.String(tpe.coerceOutput(value.value))}
+        } with ${init"$typeName()"}
+      """
+    }
+
+    val invalidValueLiteral = Lit.String(s" is not a valid value of ${tpe.name} enum.")
+
+    val stats = valueClasses ++ List(
+      q"val values: $SetTypeName[$typeName] = $SetTermName(..$valueTermNames)",
+      q"""
+        implicit val encoder: $EncoderTypeName[$typeName] = $EncoderTermName(_.value)
+      """,
+      q"""
+        implicit val decoder: $DecoderTypeName[$typeName] = $DecoderTermName[String]
+          .emap { maybeValue =>
+            values
+              .find(_.value == maybeValue)
+              .toRight(new RuntimeException(maybeValue + $invalidValueLiteral))
+          }
+      """
+    )
+
+    generateSource(
+      List(
+        q"""
+          sealed abstract class ${Type.Name(tpe.name)} extends Product with Serializable {
+            def value: String
+          }
+        """,
+        q"""
+          object ${Term.Name(tpe.name)} {
+            ..$stats
+          }
+        """
+      ),
+      packageName
+    )
+  }
+
+  def generateInputObjectType(
+    tpe: schema.InputObjectType[_],
+    packageName: Option[String] = None
+  ): Source = {
+    val className = tpe.name.capitalize
+    val typeName = Type.Name(className)
+
+    val params = tpe.fields.map { field =>
+      param"${Term.Name(field.name)}: ${generateInputType(field.fieldType)}"
+    }
+
+    generateSource(
+      List(
+        q"final case class $typeName(..$params)",
+        q"""
+          object ${Term.Name(className)} {
+            implicit val encoder: $EncoderTypeName[$typeName] =
+              _root_.anduin.scalajs.noton.generic.deriveEncoder[$typeName]
+          }
+        """
+      ),
+      packageName
+    )
+  }
+
+  private def generateVariables(variables: List[tree.Variable]): List[Stat] = {
+    if (variables.nonEmpty) {
+      val params = variables.map { variable =>
+        param"${Term.Name(variable.name)}: ${generateInputType(variable.tpe)}"
+      }
+
+      List(
+        q"final case class Variables(..$params)",
+        q"""
+          object Variables {
+            implicit val encoder: $EncoderTypeName[Variables] =
+              _root_.anduin.scalajs.noton.generic.deriveEncoder[Variables]
+          }
+        """
+      )
+    } else {
+      List.empty
     }
   }
 
@@ -125,6 +201,14 @@ private[codegen] object CodeGenerator {
       subfields.base.toList
     }
 
+    val params = baseFields.map { field =>
+      param"${Term.Name(field.name)}: ${generateFieldType(field, className)}"
+    }
+
+    val possibleTypeLiterals = field.possibleTypes.toList.map { possibleType =>
+      Lit.String(possibleType.name)
+    }
+
     val projectionFields = subfields.projections.toList
     val projectionMethods = projectionFields.map {
       case (typeCondition, fields) =>
@@ -139,7 +223,7 @@ private[codegen] object CodeGenerator {
 
         q"""
           def ${Term.Name(s"as$className")}: $returningType = {
-            val typename = any.asInstanceOf[_root_.scala.scalajs.js.Dynamic].__typename
+            val typename = raw.asInstanceOf[_root_.scala.scalajs.js.Dynamic].__typename
 
             if ($termName.possibleTypes.contains(typename)) {
               _root_.scala.Some($termName(..$params))
@@ -148,18 +232,6 @@ private[codegen] object CodeGenerator {
             }
           }
         """
-    }
-
-    val clazz = q"""
-      final case class $classTypeName (
-        ..${generateSubfieldParams(baseFields, className)}
-      )(any: _root_.scala.scalajs.js.Any) {
-        ..$projectionMethods
-      }
-    """
-
-    val possibleTypeLiterals = field.possibleTypes.toList.map { possibleType =>
-      Lit.String(possibleType.name)
     }
 
     val projectionTypes = projectionFields.flatMap {
@@ -174,24 +246,29 @@ private[codegen] object CodeGenerator {
         )
     }
 
-    // There is a known issue: class name, sub-field type names
-    // and projection type names could clash.
-    val companionObject = q"""
-      object ${Term.Name(className)} {
-        val possibleTypes: $SetTypeName[String] = $SetTermName(..$possibleTypeLiterals)
+    List(
+      q"""
+        final case class $classTypeName(..$params)(raw: _root_.scala.scalajs.js.Any) {
+          ..$projectionMethods
+        }
+      """,
+      // There is a known issue: class name, sub-field type names
+      // and projection type names could clash.
+      q"""
+        object ${Term.Name(className)} {
+          val possibleTypes: $SetTypeName[String] = $SetTermName(..$possibleTypeLiterals)
 
-        implicit val decoder: _root_.anduin.scalajs.noton.Decoder[$classTypeName] =
-          _root_.anduin.scalajs.noton.generic.deriveDecoder[$classTypeName]
+          implicit val decoder: $DecoderTypeName[$classTypeName] =
+            _root_.anduin.scalajs.noton.generic.deriveDecoder[$classTypeName]
 
-        ..${generateSubfieldTypes(baseFields)}
-        ..$projectionTypes
-      }
-    """
-
-    List(clazz, companionObject)
+          ..${generateSubfieldTypes(baseFields)}
+          ..$projectionTypes
+        }
+      """
+    )
   }
 
-  def generate(operation: tree.Operation, packageName: Option[String] = None): Stat = {
+  def generateOperation(operation: tree.Operation, packageName: Option[String] = None): Source = {
     val classNameSuffix = operation.operationType match {
       case ast.OperationType.Query => "Query"
       case ast.OperationType.Mutation => "Mutation"
@@ -200,19 +277,16 @@ private[codegen] object CodeGenerator {
 
     val rootField = operation.underlyingField.copy(name = "data")
 
-    packageName.foldLeft[Stat](
-      q"""
-        object ${Term.Name(s"${operation.name.capitalize}$classNameSuffix")} {
-          ..${generateVariables(operation.variables.toList)}
-          ..${generateCompositeField(rootField)}
-        }
-      """
-    ) { (`object`, packageName) =>
-      q"""
-        package ${Term.Name(packageName)} {
-          ${`object`}
-        }
-      """
-    }
+    generateSource(
+      List(
+        q"""
+          object ${Term.Name(s"${operation.name.capitalize}$classNameSuffix")} {
+            ..${generateVariables(operation.variables.toList)}
+            ..${generateCompositeField(rootField)}
+          }
+        """
+      ),
+      packageName
+    )
   }
 }

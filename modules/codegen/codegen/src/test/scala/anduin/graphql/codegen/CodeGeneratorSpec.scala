@@ -14,6 +14,8 @@ import cats.implicits._
 
 final class CodeGeneratorSpec extends WordSpec with Matchers with EitherValues {
 
+  private[this] val packageName = Some("anduin.graphql.example")
+
   "Code generator" should {
 
     "do something good" in {
@@ -31,7 +33,7 @@ final class CodeGeneratorSpec extends WordSpec with Matchers with EitherValues {
           val (_, operations) = result
 
           operations.foreach { operation =>
-            println(CodeGenerator.generate(operation, Some("anduin.graphql.example")))
+            println(CodeGenerator.generateOperation(operation, packageName))
           }
         }
 
@@ -60,8 +62,16 @@ final class CodeGeneratorSpec extends WordSpec with Matchers with EitherValues {
           inputTypeNames should contain("NameInput")
           inputTypeNames should contain("FirstNameInput")
 
+          state.inputTypes.foreach {
+            case Left(enumType) =>
+              println(CodeGenerator.generateEnumType(enumType, packageName))
+
+            case Right(inputObjectType) =>
+              println(CodeGenerator.generateInputObjectType(inputObjectType, packageName))
+          }
+
           operations.foreach { operation =>
-            println(CodeGenerator.generate(operation, Some("anduin.graphql.example")))
+            println(CodeGenerator.generateOperation(operation, packageName))
           }
         }
 
