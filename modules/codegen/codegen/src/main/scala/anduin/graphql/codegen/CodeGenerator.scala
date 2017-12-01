@@ -48,19 +48,19 @@ private[codegen] object CodeGenerator {
     }
   }
 
-  private[this] def generateVariableType(variable: tree.Variable): Type = {
+  private def generateVariableType(variable: tree.Variable): Type = {
     generateType(variable.tpe)(
       Type.Name(variable.tpe.namedType.name)
     )
   }
 
-  private[this] def generateVariableParams(variables: List[tree.Variable]): List[Term.Param] = {
+  private def generateVariableParams(variables: List[tree.Variable]): List[Term.Param] = {
     variables.map { variable =>
       param"${Term.Name(variable.name)}: ${generateVariableType(variable)}"
     }
   }
 
-  private[this] def generateVariables(variables: List[tree.Variable]): List[Stat] = {
+  private def generateVariables(variables: List[tree.Variable]): List[Stat] = {
     if (variables.nonEmpty) {
       List(
         q"""
@@ -80,7 +80,7 @@ private[codegen] object CodeGenerator {
     }
   }
 
-  private[this] def generateFieldType(field: tree.Field, parentClassName: String): Type = {
+  private def generateFieldType(field: tree.Field, parentClassName: String): Type = {
     generateType(field.tpe)(
       field match {
         case _: tree.CompositeField =>
@@ -92,7 +92,7 @@ private[codegen] object CodeGenerator {
     )
   }
 
-  private[this] def generateSubfieldParams(
+  private def generateSubfieldParams(
     fields: List[tree.Field],
     parentClassName: String
   ): List[Term.Param] = {
@@ -101,7 +101,7 @@ private[codegen] object CodeGenerator {
     }
   }
 
-  private[this] def generateSubfieldTypes(fields: List[tree.Field]): List[Stat] = {
+  private def generateSubfieldTypes(fields: List[tree.Field]): List[Stat] = {
     fields.flatMap {
       case compositeField: tree.CompositeField =>
         generateCompositeField(compositeField)
@@ -111,7 +111,7 @@ private[codegen] object CodeGenerator {
     }
   }
 
-  private[this] def generateCompositeField( // scalastyle:ignore method.length
+  private def generateCompositeField( // scalastyle:ignore method.length
     field: tree.CompositeField
   ): List[Stat] = {
     val subfields = field.subfields
