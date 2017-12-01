@@ -10,7 +10,7 @@ import sangria.ast
 import sangria.validation.QueryValidator
 
 import anduin.graphql.codegen.CodeGenerator
-import anduin.graphql.codegen.parse.DocumentParser
+import anduin.graphql.codegen.parse.{DocumentParser, ParseState}
 
 // scalastyle:off underscore.import
 import caseapp._
@@ -85,11 +85,11 @@ final case class GenerateOperations(
             }
           }
 
-          operations <- {
-            parser.parse(document).leftMap { exception =>
-              CodegenCliException(exception)
-            }
-          }
+          operations <- parser
+            .parse(document)
+            .run(ParseState.Empty)
+            .leftMap(CodegenCliException.apply)
+            .map { case (_, operations) => operations }
 
           _ <- operations.foldLeftM[Result, Unit](()) { (_, operation) =>
             // Remember to fix this hack later
