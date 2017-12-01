@@ -6,7 +6,17 @@ import scala.scalajs.js
 import scala.util.Try
 
 trait Decoder[A] {
+
   def apply(any: js.Any): Decoder.Result[A]
+
+  def emap[B](decode: A => Decoder.Result[B]): Decoder[B] = {
+    Decoder.instance { any =>
+      for {
+        a <- apply(any)
+        b <- decode(a)
+      } yield b
+    }
+  }
 }
 
 object Decoder {
