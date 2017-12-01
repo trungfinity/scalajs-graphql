@@ -93,6 +93,42 @@ final class DerivationMacros(val c: blackbox.Context) {
     }
   }
 
+  def encoder[A: c.WeakTypeTag]: c.Expr[Encoder[A]] = {
+    val tpe = weakTypeOf[A]
+
+    membersFromPrimaryCtor(tpe).fold(
+      c.abort(c.enclosingPosition, s"could not find the primary constructor of $tpe")
+    ) {
+      case (members, _) =>
+        val repr = ProductRepr(members)
+
+        val instanceDefs = repr.instances.map(_.encoder).map {
+          case instance @ Instance(_, instanceType, instanceName) =>
+            val resolved = instance.resolve()
+            q"val $instanceName: _root_.anduin.scalajs.noton.Encoder[$instanceType] = $resolved"
+        }
+
+        val params = repr.members.map {
+          case Member(memberName, memberDecodedName, memberType) =>
+            q"""
+              _root_.scala.Tuple2.apply[_root_.java.lang.String, _root_.scala.scalajs.js.Any](
+                ${Literal(Constant(memberDecodedName))},
+                ${repr.encoder(memberType).name}(a.$memberName)
+              )
+            """
+        }
+
+        c.Expr[Encoder[A]](
+          q"""
+            _root_.anduin.scalajs.noton.Encoder.instance { a =>
+              ..$instanceDefs
+              _root_.scala.scalajs.js.Dynamic.literal(..$params)
+            }
+          """
+        )
+    }
+  }
+
   def decoder[A: c.WeakTypeTag]: c.Expr[Decoder[A]] = { // scalastyle:ignore method.length
     val tpe = weakTypeOf[A]
 
