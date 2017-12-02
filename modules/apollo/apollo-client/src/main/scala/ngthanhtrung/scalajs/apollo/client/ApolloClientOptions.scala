@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 package ngthanhtrung.scalajs.apollo.client
 
 import scala.scalajs.js

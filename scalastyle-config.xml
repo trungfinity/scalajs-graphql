@@ -13,11 +13,6 @@
     </parameters>
   </check>
   <check enabled="true" class="org.scalastyle.file.FileTabChecker" level="error" />
-  <check enabled="true" class="org.scalastyle.file.HeaderMatchesChecker" level="error">
-    <parameters>
-      <parameter name="header"><![CDATA[// Copyright (C) 2017 Anduin Transactions, Inc.]]></parameter>
-    </parameters>
-  </check>
   <check enabled="true" class="org.scalastyle.file.IndentationChecker" level="error">
     <parameters>
       <parameter name="tabSize"><![CDATA[2]]></parameter>

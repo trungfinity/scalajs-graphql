@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 lazy val root = project
   .in(file("."))
   .settings(

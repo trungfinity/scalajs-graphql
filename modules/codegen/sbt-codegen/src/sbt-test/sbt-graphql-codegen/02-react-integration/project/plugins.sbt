@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 lazy val pluginVersion = System.getProperty("plugin.version")
 
 {

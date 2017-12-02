@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 import sbt.Def.{setting => s}
 
 // scalastyle:off underscore.import

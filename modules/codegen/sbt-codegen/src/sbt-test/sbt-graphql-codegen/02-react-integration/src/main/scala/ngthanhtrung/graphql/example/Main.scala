@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 package ngthanhtrung.graphql.example
 
 import scala.scalajs.js

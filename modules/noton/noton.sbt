@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 lazy val `scalajs-noton-core` = project
   .in(file("noton-core"))
   .enablePlugins(ScalaJSPlugin)

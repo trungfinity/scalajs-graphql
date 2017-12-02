@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 // scalastyle:off underscore.import
 import com.lucidchart.sbt.scalafmt.ScalafmtCorePlugin.autoImport._
 import org.scalajs.sbtplugin.ScalaJSPlugin.autoImport._

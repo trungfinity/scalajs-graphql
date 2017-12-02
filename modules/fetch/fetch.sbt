@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 lazy val `scalajs-io` = LocalProject("scalajs-io")
 
 lazy val `scalajs-fetch` = project
