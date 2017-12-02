@@ -1,9 +1,9 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 // scalastyle:off multiple.string.literals
 
 lazy val `scalajs-fetch` = LocalProject("scalajs-fetch")
 lazy val `scalajs-node-fetch` = LocalProject("scalajs-node-fetch")
+
+lazy val `scalajs-noton-generic` = LocalProject("scalajs-noton-generic")
 
 lazy val `scalajs-graphql-tools` = project
   .in(file("graphql-tools"))
@@ -83,6 +83,7 @@ lazy val `scalajs-react-apollo` = project
   .in(file("react-apollo"))
   .dependsOn(
     `scalajs-apollo-client`,
+    `scalajs-noton-generic`,
     `scalajs-graphql-tools` % Test,
     `scalajs-apollo-link-mock` % Test,
     `scalajs-apollo-cache-inmemory` % Test

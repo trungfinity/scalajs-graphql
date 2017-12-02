@@ -1,0 +1,37 @@
+type FirstName {
+  value: String!
+}
+
+type Name {
+  firstName: FirstName!
+  lastName: String
+}
+
+input FirstNameInput {
+  value: String!
+}
+
+input NameInput {
+  firstName: FirstNameInput!
+  lastName: String
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  UNKNOWN
+}
+
+type Person {
+  name: Name
+  gender: Gender
+  age: Int
+}
+
+type Query {
+  personByName(name: NameInput!): Person
+}
+
+schema {
+  query: Query
+}

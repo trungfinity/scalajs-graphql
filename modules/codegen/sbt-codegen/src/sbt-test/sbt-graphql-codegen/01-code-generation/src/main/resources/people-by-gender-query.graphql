@@ -1,0 +1,9 @@
+query GetPeopleByGender($gender: Gender!) {
+  peopleByGender(gender: $gender) {
+    name {
+      firstName { value }
+      lastName
+    }
+    age
+  }
+}

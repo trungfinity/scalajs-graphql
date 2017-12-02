@@ -1,4 +1,13 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
+// scalastyle:off multiple.string.literals
+
+lazy val `scalajs-apollo-cache` = LocalProject("scalajs-apollo-cache")
+lazy val `scalajs-apollo-cache-inmemory` = LocalProject("scalajs-apollo-cache-inmemory")
+lazy val `scalajs-apollo-client` = LocalProject("scalajs-apollo-client")
+lazy val `scalajs-apollo-link` = LocalProject("scalajs-apollo-link")
+lazy val `scalajs-apollo-link-http` = LocalProject("scalajs-apollo-link-http")
+lazy val `scalajs-apollo-link-mock` = LocalProject("scalajs-apollo-link-mock")
+lazy val `scalajs-graphql-tools` = LocalProject("scalajs-graphql-tools")
+lazy val `scalajs-react-apollo` = LocalProject("scalajs-react-apollo")
 
 lazy val `scalajs-noton-core` = LocalProject("scalajs-noton-core")
 lazy val `scalajs-noton-generic` = LocalProject("scalajs-noton-generic")
@@ -43,13 +52,21 @@ lazy val `sbt-graphql-codegen` = project
       )
     ),
     buildInfoKeys := Seq[BuildInfoKey](version),
-    buildInfoPackage := "anduin.graphql.codegen.sbt",
+    buildInfoPackage := "ngthanhtrung.graphql.codegen.sbt",
     test := (),
     publishLocal := publishLocal
       .dependsOn(
         // Hacky, why does this project have to know all transitive dependencies?
         publishLocal in `graphql-codegen`,
         publishLocal in `graphql-codegen-cli`,
+        publishLocal in `scalajs-apollo-cache`,
+        publishLocal in `scalajs-apollo-cache-inmemory`,
+        publishLocal in `scalajs-apollo-client`,
+        publishLocal in `scalajs-apollo-link`,
+        publishLocal in `scalajs-apollo-link-http`,
+        publishLocal in `scalajs-apollo-link-mock`,
+        publishLocal in `scalajs-graphql-tools`,
+        publishLocal in `scalajs-react-apollo`,
         publishLocal in `scalajs-noton-core`,
         publishLocal in `scalajs-noton-generic`
       )

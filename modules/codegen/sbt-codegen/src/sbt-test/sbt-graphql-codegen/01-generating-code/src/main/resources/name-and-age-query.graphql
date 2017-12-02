@@ -1,7 +1,0 @@
-query GetNameAndAge {
-  name {
-    firstName
-    lastName
-  }
-  age
-}

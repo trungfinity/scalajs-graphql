@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 addSbtPlugin("org.scala-js" % "sbt-scalajs" % "0.6.20")
 
 addSbtPlugin("com.eed3si9n" % "sbt-buildinfo" % "0.7.0")

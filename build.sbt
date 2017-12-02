@@ -1,5 +1,3 @@
-// Copyright (C) 2017 Anduin Transactions, Inc.
-
 // scalastyle:off multiple.string.literals
 
 lazy val `scalajs-io` = project
