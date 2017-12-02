@@ -80,15 +80,15 @@
   <check enabled="true" class="org.scalastyle.scalariform.ImportGroupingChecker" level="error" />
   <check enabled="true" class="org.scalastyle.scalariform.ImportOrderChecker" level="error">
     <parameters>
-      <parameter name="groups"><![CDATA[java,scala,others,anduin,java._,scala._,others._,anduin._]]></parameter>
+      <parameter name="groups"><![CDATA[java,scala,others,ngthanhtrung,java._,scala._,others._,ngthanhtrung._]]></parameter>
       <parameter name="group.java"><![CDATA[^javax?\..*(?<!\._)$]]></parameter>
       <parameter name="group.scala"><![CDATA[^scala\..*(?<!\._)$]]></parameter>
-      <parameter name="group.others"><![CDATA[^(?!(anduin|javax?|scala)\.).*(?<!\._)$]]></parameter>
-      <parameter name="group.anduin"><![CDATA[^anduin\..*(?<!\._)$]]></parameter>
+      <parameter name="group.others"><![CDATA[^(?!(javax?|scala|ngthanhtrung)\.).*(?<!\._)$]]></parameter>
+      <parameter name="group.ngthanhtrung"><![CDATA[^ngthanhtrung\..*(?<!\._)$]]></parameter>
       <parameter name="group.java._"><![CDATA[^javax?\..*\._$]]></parameter>
       <parameter name="group.scala._"><![CDATA[^scala\..*\._$]]></parameter>
-      <parameter name="group.others._"><![CDATA[^(?!(anduin|javax?|scala)\.).*\._$]]></parameter>
-      <parameter name="group.anduin._"><![CDATA[^anduin\..*\._$]]></parameter>
+      <parameter name="group.others._"><![CDATA[^(?!(javax?|scala|ngthanhtrung)\.).*\._$]]></parameter>
+      <parameter name="group.ngthanhtrung._"><![CDATA[^ngthanhtrung\..*\._$]]></parameter>
     </parameters>
   </check>
   <check enabled="true" class="org.scalastyle.scalariform.LowercasePatternMatchChecker" level="error" />

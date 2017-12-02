@@ -4,7 +4,7 @@ lazy val pluginVersion = System.getProperty("plugin.version")
 
 {
   if (pluginVersion != null) { // scalastyle:ignore null
-    addSbtPlugin("com.anduintransact" % "sbt-graphql-codegen" % pluginVersion)
+    addSbtPlugin("com.ngthanhtrung" % "sbt-graphql-codegen" % pluginVersion)
   } else {
     throw new RuntimeException("Plugin version is not specified.")
   }

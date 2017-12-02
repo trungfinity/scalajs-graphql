@@ -35,7 +35,7 @@ object CommonSettingPlugin extends AutoPlugin {
   )
 
   override lazy val buildSettings: Seq[Def.Setting[_]] = Seq(
-    organization := "com.anduintransact",
+    organization := "com.ngthanhtrung",
     version := "0.1.0-SNAPSHOT",
     scalaVersion := "2.12.4",
     scalafmtShowDiff in scalafmt := true

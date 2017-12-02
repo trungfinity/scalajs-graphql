@@ -54,7 +54,7 @@ lazy val `sbt-graphql-codegen` = project
       )
     ),
     buildInfoKeys := Seq[BuildInfoKey](version),
-    buildInfoPackage := "anduin.graphql.codegen.sbt",
+    buildInfoPackage := "ngthanhtrung.graphql.codegen.sbt",
     test := (),
     publishLocal := publishLocal
       .dependsOn(

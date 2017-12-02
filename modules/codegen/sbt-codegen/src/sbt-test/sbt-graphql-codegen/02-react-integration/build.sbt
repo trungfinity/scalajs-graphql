@@ -10,16 +10,16 @@ lazy val root = project
       if (libraryVersion != null) { // scalastyle:ignore null
         Seq(
           // scalastyle:off multiple.string.literals
-          "com.anduintransact" %%% "scalajs-graphql-tools" % libraryVersion,
-          "com.anduintransact" %%% "scalajs-apollo-link-mock" % libraryVersion,
-          "com.anduintransact" %%% "scalajs-apollo-cache-inmemory" % libraryVersion
+          "com.ngthanhtrung" %%% "scalajs-graphql-tools" % libraryVersion,
+          "com.ngthanhtrung" %%% "scalajs-apollo-link-mock" % libraryVersion,
+          "com.ngthanhtrung" %%% "scalajs-apollo-cache-inmemory" % libraryVersion
           // scalastyle:on multiple.string.literals
         )
       } else {
         throw new RuntimeException("Library version is not specified.")
       }
     },
-    graphqlCodegenPackage in Compile := Some("anduin.graphql.example"),
+    graphqlCodegenPackage in Compile := Some("ngthanhtrung.graphql.example"),
     scalaJSUseMainModuleInitializer in Compile := true
   )
   .enablePlugins(GraphqlCodegenPlugin)
