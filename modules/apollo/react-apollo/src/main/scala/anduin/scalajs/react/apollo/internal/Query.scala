@@ -5,4 +5,4 @@ package anduin.scalajs.react.apollo.internal
 import scala.scalajs.js
 
 @js.native
-trait Query[Vars <: js.Object, Data <: js.Object] extends js.Object
+trait Query[Variables <: js.Any, Data <: js.Any] extends js.Object

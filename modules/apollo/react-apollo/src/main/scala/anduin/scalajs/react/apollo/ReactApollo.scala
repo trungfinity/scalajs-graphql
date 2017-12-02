@@ -5,13 +5,21 @@ package anduin.scalajs.react.apollo
 import scala.language.higherKinds
 import scala.scalajs.js
 
-import anduin.scalajs.react.apollo.internal.{ApolloQueryProps, HigherOrderComponent}
+import anduin.scalajs.noton.{Decoder, Encoder}
 
 object ReactApollo {
 
-  def graphql[Vars <: js.Object, Data <: js.Object](
-    query: Query[Vars, Data]
-  ): HigherOrderComponent[Vars, ApolloQueryProps[Data]] = {
-    internal.ReactApollo.graphql(query.raw)
+  def graphql[Variables, Data](
+    query: Query.Aux[Variables, Data]
+  )(
+    implicit encoder: Encoder[Variables],
+    decoder: Decoder[Data]
+  ): HigherOrderComponent[Variables, ApolloQueryProps[Data]] = {
+    new HigherOrderComponent[Variables, ApolloQueryProps[Data]](
+      internal.ReactApollo
+        .graphql(query.raw)
+        // scalastyle:off token
+        .asInstanceOf[internal.HigherOrderComponent[js.Object, js.Object]] // scalastyle:on token
+    )
   }
 }

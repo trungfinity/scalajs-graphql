@@ -9,7 +9,7 @@ import scala.scalajs.js.annotation.{JSImport, JSName}
 @js.native
 object GraphqlTag extends js.Object {
 
-  @JSName(JSImport.Default) def gql[Vars <: js.Object, Data <: js.Object](
+  @JSName(JSImport.Default) def gql[Variables <: js.Any, Data <: js.Any](
     queryString: String
-  ): Query[Vars, Data] = js.native
+  ): Query[Variables, Data] = js.native
 }
