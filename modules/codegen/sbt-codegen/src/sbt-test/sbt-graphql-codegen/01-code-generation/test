@@ -1,4 +1,2 @@
-> graphql-codegen
-$ pause
 > run
-$ exists target/scala-2.12/src_managed/main/sbt-graphql-codegen/anduin/graphql/example/GetSomeoneNameAndAgeQuery.scala
+$ exists target/scala-2.12/src_managed/main/sbt-graphql-codegen/anduin/graphql/example/GetSomeoneQuery.scala
