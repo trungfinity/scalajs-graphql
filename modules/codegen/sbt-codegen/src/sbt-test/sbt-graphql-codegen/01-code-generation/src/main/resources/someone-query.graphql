@@ -1,4 +1,4 @@
-query GetSomeoneNameAndAge {
+query GetSomeone {
   someone {
     name {
       firstName { value }

@@ -15,9 +15,9 @@ object Main {
       "lastName" -> null
     )
 
-    val firstName = GetSomeoneNameAndAgeQuery.Data.Someone.Name.FirstName("Trung")(firstNameJs)
-    val name = GetSomeoneNameAndAgeQuery.Data.Someone.Name(firstName, None)(nameJs)
-    val decodedName = Decoder[GetSomeoneNameAndAgeQuery.Data.Someone.Name].apply(nameJs)
+    val firstName = GetSomeoneQuery.Data.Someone.Name.FirstName("Trung")(firstNameJs)
+    val name = GetSomeoneQuery.Data.Someone.Name(firstName, None)(nameJs)
+    val decodedName = Decoder[GetSomeoneQuery.Data.Someone.Name].apply(nameJs)
 
     println("Comparing between:")
     println(s"1. Original name: $name")
