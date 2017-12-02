@@ -10,6 +10,8 @@ import sbt._
 import sbt.Keys._
 // scalastyle:on underscore.import
 
+// scalastyle:off multiple.string.literals
+
 object GraphqlCodegenPlugin extends AutoPlugin {
 
   override lazy val trigger: PluginTrigger = noTrigger
@@ -52,6 +54,7 @@ object GraphqlCodegenPlugin extends AutoPlugin {
       ivyConfigurations += GraphqlCodegen,
       libraryDependencies ++= List(
         "com.anduintransact" %% "graphql-codegen-cli" % BuildInfo.version % GraphqlCodegen,
+        "com.anduintransact" %%% "scalajs-react-apollo" % BuildInfo.version,
         "com.anduintransact" %%% "scalajs-noton-generic" % BuildInfo.version
       ),
       mainClass in GraphqlCodegen := Some("anduin.graphql.codegen.cli.CodegenCli"),
