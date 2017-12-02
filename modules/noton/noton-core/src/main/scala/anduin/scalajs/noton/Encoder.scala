@@ -16,6 +16,7 @@ object Encoder {
 
   implicit val intEncoder: Encoder[Int] = instance(identity[Int])
   implicit val stringEncoder: Encoder[String] = instance(identity[String])
+  implicit val booleanEncoder: Encoder[Boolean] = instance(identity[Boolean])
 
   implicit def optionEncoder[A](implicit encoder: Encoder[A]): Encoder[Option[A]] = {
     instance {

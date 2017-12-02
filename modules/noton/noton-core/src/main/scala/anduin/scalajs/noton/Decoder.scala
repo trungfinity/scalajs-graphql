@@ -37,6 +37,10 @@ object Decoder {
     Try(any.asInstanceOf[String]).toEither // scalastyle:ignore token
   }
 
+  implicit val booleanDecoder: Decoder[Boolean] = instance { any =>
+    Try(any.asInstanceOf[Boolean]).toEither // scalastyle:ignore token
+  }
+
   implicit def optionDecoder[A](implicit decoder: Decoder[A]): Decoder[Option[A]] = {
     instance { any =>
       if (!js.isUndefined(any) && any != null) { // scalastyle:ignore null
