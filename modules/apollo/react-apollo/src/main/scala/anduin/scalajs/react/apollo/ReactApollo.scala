@@ -9,17 +9,18 @@ import anduin.scalajs.noton.{Decoder, Encoder}
 
 object ReactApollo {
 
-  def graphql[Variables, Data](
-    query: Query.Aux[Variables, Data]
+  def graphql[Query <: ApolloQuery](
+    query: Query
   )(
-    implicit encoder: Encoder[Variables],
-    decoder: Decoder[Data]
-  ): HigherOrderComponent[Variables, ApolloQueryProps[Data]] = {
-    new HigherOrderComponent[Variables, ApolloQueryProps[Data]](
+    implicit encoder: Encoder[Query#Variables],
+    decoder: Decoder[Query#Data]
+  ): HigherOrderComponent[Query#Variables, ApolloQueryProps[Query#Data]] = {
+    // scalastyle:off token
+    new HigherOrderComponent[Query#Variables, ApolloQueryProps[Query#Data]](
       internal.ReactApollo
         .graphql(query.raw)
-        // scalastyle:off token
-        .asInstanceOf[internal.HigherOrderComponent[js.Object, js.Object]] // scalastyle:on token
+        .asInstanceOf[internal.HigherOrderComponent[js.Object, js.Object]]
     )
+    // scalastyle:on token
   }
 }

@@ -1,6 +1,6 @@
 // Copyright (C) 2017 Anduin Transactions, Inc.
 
-package anduin.scalajs.react.apollo
+package anduin.scalajs.react.apollo.internal
 
 import org.scalatest.{FlatSpec, Matchers}
 

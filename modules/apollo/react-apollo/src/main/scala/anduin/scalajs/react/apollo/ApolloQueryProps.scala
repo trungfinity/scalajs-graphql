@@ -7,12 +7,7 @@ import scala.scalajs.js
 import anduin.scalajs.noton.Decoder
 import anduin.scalajs.noton.generic.deriveDecoder
 
-final case class ApolloQueryProps[Data](
-  data: Option[Data],
-  loading: Boolean
-)(
-  raw: js.Any
-)
+final case class ApolloQueryProps[Data](data: Data)(raw: js.Any)
 
 object ApolloQueryProps {
 

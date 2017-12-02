@@ -15,39 +15,61 @@ import anduin.scalajs.apollo.graphqltools.internal.{
   SchemaMockFunctionsOptions
 }
 import anduin.scalajs.apollo.link.internal.{ApolloMockLink, ApolloMockLinkOptions}
+import anduin.scalajs.noton.{Decoder, Encoder}
+import anduin.scalajs.noton.generic.{deriveDecoder, deriveEncoder}
 
 // scalastyle:off underscore.import
+import japgolly.scalajs.react._
 import japgolly.scalajs.react.vdom.html_<^._
 // scalastyle:on underscore.import
 
 final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
 
-  private[this] final class User(val id: Int, val name: String) extends js.Object
-  private[this] final class Data(val user: js.UndefOr[User]) extends js.Object
-  private[this] final class Props(val data: Data) extends js.Object
-  private[this] final class Vars(val id: Int) extends js.Object
+  private[this] object GetUserQuery extends ApolloQuery {
 
-  private[this] val component = { props: Props =>
-    props.data.user
-      .fold {
+    val raw: internal.Query[js.Object, js.Object] = internal.GraphqlTag.gql[js.Object, js.Object](
+      """query GetUser($id: Int) {
+        |  user(id: $id) { id, name }
+        |}
+      """.stripMargin
+    )
+
+    final case class Variables(id: Int)
+
+    object Variables {
+      implicit val encoder: Encoder[Variables] = deriveEncoder
+    }
+
+    final case class Data(user: Option[Data.User])(raw: js.Any)
+
+    object Data {
+
+      implicit val decoder: Decoder[Data] = deriveDecoder
+
+      final case class User(id: Int, name: String)(raw: js.Any)
+
+      object User {
+        implicit val decoder: Decoder[User] = deriveDecoder
+      }
+    }
+  }
+
+  private[this] val component = ScalaComponent
+    .builder[ApolloQueryProps[GetUserQuery.Data]]("User")
+    .render_P { props =>
+      props.data.user.fold(
         <.div("Loading")
-      } { user =>
+      ) { user =>
         <.div(
           s"ID: ${user.id}",
           <.br(),
           s"Name: ${user.name}"
         )
       }
-      .render
-      .rawElement
-  }
+    }
+    .build
 
-  private[this] val query = GraphqlTag.gql[Props, Vars](
-    """query getUser($id: Int) {
-      |  user(id: $id) { id, name }
-      |}
-    """.stripMargin
-  )
+  private[this] val graphqlComponent = ReactApollo.graphql(GetUserQuery).apply(component)
 
   private[this] val schema = GraphqlTools.makeExecutableSchema(
     new ExecutableSchemaOptions(
@@ -73,18 +95,13 @@ final class ReactApolloSpec extends FlatSpec with BeforeAndAfterAll {
     )
   )
 
-  // scalastyle:off magic.number token
-  private[this] val any = internal.ReactApollo.graphql(query.raw)(component)
-  private[this] val element = React.createElement(any.asInstanceOf[ReactClassUntyped], new Vars(10))
   private[this] val root = React.createElement(
-    internal.ApolloProvider.asInstanceOf[ReactClassUntyped],
+    internal.ApolloProvider.asInstanceOf[ReactClassUntyped], // scalastyle:ignore token
     new internal.ApolloProviderProps(client),
-    element
+    graphqlComponent(GetUserQuery.Variables(10)).raw // scalastyle:ignore magic.number
   )
 
-  println(ReactDOMServer.renderToString(component(new Props(new Data(new User(10, "Hello"))))))
   println(ReactDOMServer.renderToString(root))
-  // scalastyle:on magic.number token
 
   internal.ReactApollo.renderToStringWithData(root).`then`[Unit] { result =>
     println(result)
