@@ -173,7 +173,9 @@ private[codegen] object CodeGenerator {
         """
       )
     } else {
-      List.empty
+      List(
+        q"type Variables = Unit"
+      )
     }
   }
 
@@ -280,7 +282,16 @@ private[codegen] object CodeGenerator {
     generateSource(
       List(
         q"""
-          object ${Term.Name(s"${operation.name.capitalize}$classNameSuffix")} {
+          object ${Term.Name(s"${operation.name.capitalize}$classNameSuffix")}
+            extends _root_.anduin.scalajs.react.apollo.ApolloQuery() {
+
+            val raw = _root_.anduin.scalajs.react.apollo.internal.GraphqlTag.gql[
+              _root_.scala.scalajs.js.Object,
+              _root_.scala.scalajs.js.Object
+            ](
+              ${Lit.String(operation.source)}
+            )
+
             ..${generateVariables(operation.variables.toList)}
             ..${generateCompositeField(rootField)}
           }

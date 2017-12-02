@@ -62,6 +62,7 @@ object tree {
     name: String,
     operationType: OperationType,
     variables: Vector[Variable],
-    underlyingField: CompositeField
+    underlyingField: CompositeField,
+    source: String
   ) extends Tree
 }

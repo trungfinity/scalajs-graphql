@@ -1,10 +1,12 @@
 query GetHeroName {
   hero {
-    ... on Human {
-      name
-    }
+    ...HumanName
     ... on Droid {
       name
     }
   }
+}
+
+fragment HumanName on Human {
+  name
 }

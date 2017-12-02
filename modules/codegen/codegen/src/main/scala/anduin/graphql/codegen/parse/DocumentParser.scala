@@ -4,6 +4,7 @@ package anduin.graphql.codegen.parse
 
 import cats.data.StateT
 import sangria.ast
+import sangria.renderer.QueryRenderer
 
 import anduin.graphql.codegen.tree
 
@@ -253,7 +254,8 @@ private[codegen] final class DocumentParser(
             operationName,
             astOperation.operationType,
             variables,
-            underlyingField
+            underlyingField,
+            QueryRenderer.render(astOperation)
           )
         }
       )
